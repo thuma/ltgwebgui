@@ -3,7 +3,21 @@ import Browser
 import Html exposing (Html, Attribute, button, div, text, input)
 import Html.Attributes exposing (..)
 import Html.Events exposing (onClick, onInput)
+import Http
+import Base64
+import Json.Decode exposing (Decoder, map4, map5, field, int, string, list)
 
+getNarvaroData : Model -> Cmd Msg
+getNarvaroData model =
+  Http.request
+        { method = "GET"
+        , headers = [Http.header "Authorization" ("Basic " ++ (Base64.encode (model.email ++ ":" ++ model.password) ))]
+        , url = "https://api.ltgee.se/vklass/v1/narvaro"
+        , body = Http.emptyBody
+        , expect = Http.expectJson GotText elevDecoder
+        , timeout = Nothing
+        , tracker = Nothing
+        } 
 
 main =
   Browser.element{
@@ -14,42 +28,85 @@ main =
 
 init : () ->( Model, Cmd Msg)
 init _ = (
-  { status = 0
+  { status = ""
   , email = ""
+  , password = ""
   }, 
   Cmd.none 
   )
 
 type alias Model = 
-  { status : Int
+  { status : String
   , email : String
+  , password: String
   }
 
+type alias Elev =
+  { namn : String
+  , uuid : String
+  , short_id : String
+  , tider : List Lektionstid
+  }
+
+type alias Lektionstid =
+  { start : String
+  , end : String
+  , lektion : String
+  , status :  String
+  , avvikelse : Int
+  }
+
+tidDecoder : Decoder Lektionstid
+tidDecoder =
+  map5 Lektionstid
+  (field "start" string)
+  (field "end" string)
+  (field "lektion" string)
+  (field "status" string)
+  (field "avvikelse" int)
+
+elevDecoder : Decoder Elev
+elevDecoder =
+  map4 Elev
+    (field "namn" string)
+    (field "uuid" string)
+    (field "short_id" string)
+    (field "tider" (Json.Decode.list tidDecoder))
+
 type Msg 
-  = Increment 
-  | Decrement
+  = Login 
+  | PasswordChange String
   | EmailChange String
+  | GotText (Result Http.Error String)
 
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
   case msg of
-    Increment ->
-      ({ model | status  = model.status+1 }, Cmd.none)
-
-    Decrement ->
-      ({ model | status  = model.status-1 }, Cmd.none)
+    Login ->
+      ({ model | status  = "Login" }, getNarvaroData model)
 
     EmailChange newEmail ->
       ({ model | email  = newEmail }, Cmd.none)
+      
+    PasswordChange newPassword ->
+      ({ model | password  = newPassword }, Cmd.none)
+    
+    GotText result ->
+      case result of
+        Ok data ->
+          ({ model | status  = data }, Cmd.none)
+        Err _ ->
+          ( model , Cmd.none)
+      
+
 
 view : Model -> ( Html Msg)
 view model = 
   div []
-    [ button [ onClick Decrement ] [ text "-" ]
-    , div [] [ text (String.fromInt model.status) ]
-    , div [] [ text (model.email) ]
-    , input [ value model.email, onInput EmailChange] []
-    , input [] []
+    [ div [] [ text model.status ]
+    , input [ value model.email, onInput EmailChange] [ ]
+    , input [ type_ "password", value model.password, onInput PasswordChange] [ ]
+    , button [ onClick Login ] [ text "Login" ]
     ]
 
 subscriptions : Model -> Sub Msg

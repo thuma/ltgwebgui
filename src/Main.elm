@@ -5,7 +5,7 @@ import Html.Attributes exposing (..)
 import Html.Events exposing (onClick, onInput)
 import Http
 import Base64
-import Json.Decode exposing (Decoder, map4, map5, field, int, string, list)
+import Json.Decode exposing (Decoder, map, map4, map5, field, int, string, list)
 
 getNarvaroData : Model -> Cmd Msg
 getNarvaroData model =
@@ -14,7 +14,7 @@ getNarvaroData model =
         , headers = [Http.header "Authorization" ("Basic " ++ (Base64.encode (model.email ++ ":" ++ model.password) ))]
         , url = "https://api.ltgee.se/vklass/v1/narvaro"
         , body = Http.emptyBody
-        , expect = Http.expectJson GotText elevDecoder
+        , expect = Http.expectJson GotText eleverDecoder
         , timeout = Nothing
         , tracker = Nothing
         } 
@@ -31,6 +31,7 @@ init _ = (
   { status = ""
   , email = ""
   , password = ""
+  , elever = []
   }, 
   Cmd.none 
   )
@@ -39,7 +40,11 @@ type alias Model =
   { status : String
   , email : String
   , password: String
+  , elever: List Elev
   }
+
+type alias Elever =
+  { alla : List Elev }
 
 type alias Elev =
   { namn : String
@@ -65,6 +70,11 @@ tidDecoder =
   (field "status" string)
   (field "avvikelse" int)
 
+eleverDecoder : Decoder Elever
+eleverDecoder =
+  Json.Decode.map Elever  
+    (field "klass" (Json.Decode.list elevDecoder))
+
 elevDecoder : Decoder Elev
 elevDecoder =
   map4 Elev
@@ -77,7 +87,7 @@ type Msg
   = Login 
   | PasswordChange String
   | EmailChange String
-  | GotText (Result Http.Error String)
+  | GotText (Result Http.Error Elever)
 
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
@@ -94,16 +104,21 @@ update msg model =
     GotText result ->
       case result of
         Ok data ->
-          ({ model | status  = data }, Cmd.none)
+          ({ model | elever  = data.alla }, Cmd.none)
         Err _ ->
           ( model , Cmd.none)
-      
+          
 
+rowElev : Elev -> Html Msg
+rowElev elev =
+    div []
+        [ text ]
 
 view : Model -> ( Html Msg)
 view model = 
   div []
     [ div [] [ text model.status ]
+    , 
     , input [ value model.email, onInput EmailChange] [ ]
     , input [ type_ "password", value model.password, onInput PasswordChange] [ ]
     , button [ onClick Login ] [ text "Login" ]

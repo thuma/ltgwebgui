@@ -5375,7 +5375,7 @@ var $elm$core$Platform$Cmd$batch = _Platform_batch;
 var $elm$core$Platform$Cmd$none = $elm$core$Platform$Cmd$batch(_List_Nil);
 var $author$project$Main$init = function (_v0) {
 	return _Utils_Tuple2(
-		{email: '', password: '', status: ''},
+		{elever: _List_Nil, email: '', password: '', status: ''},
 		$elm$core$Platform$Cmd$none);
 };
 var $elm$core$Platform$Sub$batch = _Platform_batch;
@@ -5386,6 +5386,48 @@ var $author$project$Main$subscriptions = function (model) {
 var $author$project$Main$GotText = function (a) {
 	return {$: 'GotText', a: a};
 };
+var $author$project$Main$Elever = function (alla) {
+	return {alla: alla};
+};
+var $author$project$Main$Elev = F4(
+	function (namn, uuid, short_id, tider) {
+		return {namn: namn, short_id: short_id, tider: tider, uuid: uuid};
+	});
+var $elm$json$Json$Decode$field = _Json_decodeField;
+var $elm$json$Json$Decode$list = _Json_decodeList;
+var $elm$json$Json$Decode$map4 = _Json_map4;
+var $elm$json$Json$Decode$string = _Json_decodeString;
+var $author$project$Main$Lektionstid = F5(
+	function (start, end, lektion, status, avvikelse) {
+		return {avvikelse: avvikelse, end: end, lektion: lektion, start: start, status: status};
+	});
+var $elm$json$Json$Decode$int = _Json_decodeInt;
+var $elm$json$Json$Decode$map5 = _Json_map5;
+var $author$project$Main$tidDecoder = A6(
+	$elm$json$Json$Decode$map5,
+	$author$project$Main$Lektionstid,
+	A2($elm$json$Json$Decode$field, 'start', $elm$json$Json$Decode$string),
+	A2($elm$json$Json$Decode$field, 'end', $elm$json$Json$Decode$string),
+	A2($elm$json$Json$Decode$field, 'lektion', $elm$json$Json$Decode$string),
+	A2($elm$json$Json$Decode$field, 'status', $elm$json$Json$Decode$string),
+	A2($elm$json$Json$Decode$field, 'avvikelse', $elm$json$Json$Decode$int));
+var $author$project$Main$elevDecoder = A5(
+	$elm$json$Json$Decode$map4,
+	$author$project$Main$Elev,
+	A2($elm$json$Json$Decode$field, 'namn', $elm$json$Json$Decode$string),
+	A2($elm$json$Json$Decode$field, 'uuid', $elm$json$Json$Decode$string),
+	A2($elm$json$Json$Decode$field, 'short_id', $elm$json$Json$Decode$string),
+	A2(
+		$elm$json$Json$Decode$field,
+		'tider',
+		$elm$json$Json$Decode$list($author$project$Main$tidDecoder)));
+var $author$project$Main$eleverDecoder = A2(
+	$elm$json$Json$Decode$map,
+	$author$project$Main$Elever,
+	A2(
+		$elm$json$Json$Decode$field,
+		'klass',
+		$elm$json$Json$Decode$list($author$project$Main$elevDecoder)));
 var $elm$http$Http$BadStatus_ = F2(
 	function (a, b) {
 		return {$: 'BadStatus_', a: a, b: b};
@@ -6135,6 +6177,7 @@ var $truqu$elm_base64$Base64$Encode$encode = function (input) {
 		A3($elm$core$String$foldl, $truqu$elm_base64$Base64$Encode$chomp, $truqu$elm_base64$Base64$Encode$initial, input));
 };
 var $truqu$elm_base64$Base64$encode = $truqu$elm_base64$Base64$Encode$encode;
+var $elm$json$Json$Decode$decodeString = _Json_runOnString;
 var $elm$core$Basics$composeR = F3(
 	function (f, g, x) {
 		return g(
@@ -6148,17 +6191,6 @@ var $elm$http$Http$expectStringResponse = F2(
 			$elm$core$Basics$identity,
 			A2($elm$core$Basics$composeR, toResult, toMsg));
 	});
-var $elm$http$Http$BadBody = function (a) {
-	return {$: 'BadBody', a: a};
-};
-var $elm$http$Http$BadStatus = function (a) {
-	return {$: 'BadStatus', a: a};
-};
-var $elm$http$Http$BadUrl = function (a) {
-	return {$: 'BadUrl', a: a};
-};
-var $elm$http$Http$NetworkError = {$: 'NetworkError'};
-var $elm$http$Http$Timeout = {$: 'Timeout'};
 var $elm$core$Result$mapError = F2(
 	function (f, result) {
 		if (result.$ === 'Ok') {
@@ -6170,6 +6202,17 @@ var $elm$core$Result$mapError = F2(
 				f(e));
 		}
 	});
+var $elm$http$Http$BadBody = function (a) {
+	return {$: 'BadBody', a: a};
+};
+var $elm$http$Http$BadStatus = function (a) {
+	return {$: 'BadStatus', a: a};
+};
+var $elm$http$Http$BadUrl = function (a) {
+	return {$: 'BadUrl', a: a};
+};
+var $elm$http$Http$NetworkError = {$: 'NetworkError'};
+var $elm$http$Http$Timeout = {$: 'Timeout'};
 var $elm$http$Http$resolve = F2(
 	function (toResult, response) {
 		switch (response.$) {
@@ -6193,12 +6236,19 @@ var $elm$http$Http$resolve = F2(
 					toResult(body));
 		}
 	});
-var $elm$http$Http$expectString = function (toMsg) {
-	return A2(
-		$elm$http$Http$expectStringResponse,
-		toMsg,
-		$elm$http$Http$resolve($elm$core$Result$Ok));
-};
+var $elm$http$Http$expectJson = F2(
+	function (toMsg, decoder) {
+		return A2(
+			$elm$http$Http$expectStringResponse,
+			toMsg,
+			$elm$http$Http$resolve(
+				function (string) {
+					return A2(
+						$elm$core$Result$mapError,
+						$elm$json$Json$Decode$errorToString,
+						A2($elm$json$Json$Decode$decodeString, decoder, string));
+				}));
+	});
 var $elm$http$Http$Header = F2(
 	function (a, b) {
 		return {$: 'Header', a: a, b: b};
@@ -6376,7 +6426,7 @@ var $author$project$Main$getNarvaroData = function (model) {
 	return $elm$http$Http$request(
 		{
 			body: $elm$http$Http$emptyBody,
-			expect: $elm$http$Http$expectString($author$project$Main$GotText),
+			expect: A2($elm$http$Http$expectJson, $author$project$Main$GotText, $author$project$Main$eleverDecoder),
 			headers: _List_fromArray(
 				[
 					A2(
@@ -6420,7 +6470,7 @@ var $author$project$Main$update = F2(
 					return _Utils_Tuple2(
 						_Utils_update(
 							model,
-							{status: data}),
+							{elever: data.alla}),
 						$elm$core$Platform$Cmd$none);
 				} else {
 					return _Utils_Tuple2(model, $elm$core$Platform$Cmd$none);
@@ -6467,12 +6517,10 @@ var $elm$html$Html$Events$stopPropagationOn = F2(
 			event,
 			$elm$virtual_dom$VirtualDom$MayStopPropagation(decoder));
 	});
-var $elm$json$Json$Decode$field = _Json_decodeField;
 var $elm$json$Json$Decode$at = F2(
 	function (fields, decoder) {
 		return A3($elm$core$List$foldr, $elm$json$Json$Decode$field, decoder, fields);
 	});
-var $elm$json$Json$Decode$string = _Json_decodeString;
 var $elm$html$Html$Events$targetValue = A2(
 	$elm$json$Json$Decode$at,
 	_List_fromArray(

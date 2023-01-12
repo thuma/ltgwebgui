@@ -78,7 +78,7 @@ eleverDecoder =
 elevDecoder : Decoder Elev
 elevDecoder =
   map4 Elev
-    (field "namn" string)
+    (field "name" string)
     (field "uuid" string)
     (field "short_id" string)
     (field "tider" (Json.Decode.list tidDecoder))
@@ -88,6 +88,24 @@ type Msg
   | PasswordChange String
   | EmailChange String
   | GotText (Result Http.Error Elever)
+
+errorToString : Http.Error -> String
+errorToString error =
+    case error of
+        Http.BadUrl url ->
+            "The URL " ++ url ++ " was invalid"
+        Http.Timeout ->
+            "Unable to reach the server, try again"
+        Http.NetworkError ->
+            "Unable to reach the server, check your network connection"
+        Http.BadStatus 500 ->
+            "The server had a problem, try again later"
+        Http.BadStatus 400 ->
+            "Verify your information and try again"
+        Http.BadStatus _ ->
+            "Unknown error"
+        Http.BadBody errorMessage ->
+            errorMessage
 
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
@@ -104,21 +122,20 @@ update msg model =
     GotText result ->
       case result of
         Ok data ->
-          ({ model | elever  = data.alla }, Cmd.none)
-        Err _ ->
-          ( model , Cmd.none)
-          
+          ({ model | elever = data.alla }, Cmd.none)
+        Err error ->
+          ({ model | status = (errorToString error) } , Cmd.none)
 
 rowElev : Elev -> Html Msg
 rowElev elev =
     div []
-        [ text ]
+        [ text elev.namn ]
 
 view : Model -> ( Html Msg)
 view model = 
   div []
     [ div [] [ text model.status ]
-    , 
+    , div [] ( List.map rowElev model.elever )
     , input [ value model.email, onInput EmailChange] [ ]
     , input [ type_ "password", value model.password, onInput PasswordChange] [ ]
     , button [ onClick Login ] [ text "Login" ]

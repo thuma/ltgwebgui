@@ -5383,6 +5383,29 @@ var $elm$core$Platform$Sub$none = $elm$core$Platform$Sub$batch(_List_Nil);
 var $author$project$Main$subscriptions = function (model) {
 	return $elm$core$Platform$Sub$none;
 };
+var $author$project$Main$errorToString = function (error) {
+	switch (error.$) {
+		case 'BadUrl':
+			var url = error.a;
+			return 'The URL ' + (url + ' was invalid');
+		case 'Timeout':
+			return 'Unable to reach the server, try again';
+		case 'NetworkError':
+			return 'Unable to reach the server, check your network connection';
+		case 'BadStatus':
+			switch (error.a) {
+				case 500:
+					return 'The server had a problem, try again later';
+				case 400:
+					return 'Verify your information and try again';
+				default:
+					return 'Unknown error';
+			}
+		default:
+			var errorMessage = error.a;
+			return errorMessage;
+	}
+};
 var $author$project$Main$GotText = function (a) {
 	return {$: 'GotText', a: a};
 };
@@ -5414,7 +5437,7 @@ var $author$project$Main$tidDecoder = A6(
 var $author$project$Main$elevDecoder = A5(
 	$elm$json$Json$Decode$map4,
 	$author$project$Main$Elev,
-	A2($elm$json$Json$Decode$field, 'namn', $elm$json$Json$Decode$string),
+	A2($elm$json$Json$Decode$field, 'name', $elm$json$Json$Decode$string),
 	A2($elm$json$Json$Decode$field, 'uuid', $elm$json$Json$Decode$string),
 	A2($elm$json$Json$Decode$field, 'short_id', $elm$json$Json$Decode$string),
 	A2(
@@ -6473,7 +6496,14 @@ var $author$project$Main$update = F2(
 							{elever: data.alla}),
 						$elm$core$Platform$Cmd$none);
 				} else {
-					return _Utils_Tuple2(model, $elm$core$Platform$Cmd$none);
+					var error = result.a;
+					return _Utils_Tuple2(
+						_Utils_update(
+							model,
+							{
+								status: $author$project$Main$errorToString(error)
+							}),
+						$elm$core$Platform$Cmd$none);
 				}
 		}
 	});
@@ -6537,6 +6567,15 @@ var $elm$html$Html$Events$onInput = function (tagger) {
 };
 var $elm$virtual_dom$VirtualDom$text = _VirtualDom_text;
 var $elm$html$Html$text = $elm$virtual_dom$VirtualDom$text;
+var $author$project$Main$rowElev = function (elev) {
+	return A2(
+		$elm$html$Html$div,
+		_List_Nil,
+		_List_fromArray(
+			[
+				$elm$html$Html$text(elev.namn)
+			]));
+};
 var $elm$json$Json$Encode$string = _Json_wrap;
 var $elm$html$Html$Attributes$stringProperty = F2(
 	function (key, string) {
@@ -6560,6 +6599,10 @@ var $author$project$Main$view = function (model) {
 					[
 						$elm$html$Html$text(model.status)
 					])),
+				A2(
+				$elm$html$Html$div,
+				_List_Nil,
+				A2($elm$core$List$map, $author$project$Main$rowElev, model.elever)),
 				A2(
 				$elm$html$Html$input,
 				_List_fromArray(

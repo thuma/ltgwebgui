@@ -4582,6 +4582,136 @@ var _Bitwise_shiftRightZfBy = F2(function(offset, a)
 {
 	return a >>> offset;
 });
+
+
+
+
+// STRINGS
+
+
+var _Parser_isSubString = F5(function(smallString, offset, row, col, bigString)
+{
+	var smallLength = smallString.length;
+	var isGood = offset + smallLength <= bigString.length;
+
+	for (var i = 0; isGood && i < smallLength; )
+	{
+		var code = bigString.charCodeAt(offset);
+		isGood =
+			smallString[i++] === bigString[offset++]
+			&& (
+				code === 0x000A /* \n */
+					? ( row++, col=1 )
+					: ( col++, (code & 0xF800) === 0xD800 ? smallString[i++] === bigString[offset++] : 1 )
+			)
+	}
+
+	return _Utils_Tuple3(isGood ? offset : -1, row, col);
+});
+
+
+
+// CHARS
+
+
+var _Parser_isSubChar = F3(function(predicate, offset, string)
+{
+	return (
+		string.length <= offset
+			? -1
+			:
+		(string.charCodeAt(offset) & 0xF800) === 0xD800
+			? (predicate(_Utils_chr(string.substr(offset, 2))) ? offset + 2 : -1)
+			:
+		(predicate(_Utils_chr(string[offset]))
+			? ((string[offset] === '\n') ? -2 : (offset + 1))
+			: -1
+		)
+	);
+});
+
+
+var _Parser_isAsciiCode = F3(function(code, offset, string)
+{
+	return string.charCodeAt(offset) === code;
+});
+
+
+
+// NUMBERS
+
+
+var _Parser_chompBase10 = F2(function(offset, string)
+{
+	for (; offset < string.length; offset++)
+	{
+		var code = string.charCodeAt(offset);
+		if (code < 0x30 || 0x39 < code)
+		{
+			return offset;
+		}
+	}
+	return offset;
+});
+
+
+var _Parser_consumeBase = F3(function(base, offset, string)
+{
+	for (var total = 0; offset < string.length; offset++)
+	{
+		var digit = string.charCodeAt(offset) - 0x30;
+		if (digit < 0 || base <= digit) break;
+		total = base * total + digit;
+	}
+	return _Utils_Tuple2(offset, total);
+});
+
+
+var _Parser_consumeBase16 = F2(function(offset, string)
+{
+	for (var total = 0; offset < string.length; offset++)
+	{
+		var code = string.charCodeAt(offset);
+		if (0x30 <= code && code <= 0x39)
+		{
+			total = 16 * total + code - 0x30;
+		}
+		else if (0x41 <= code && code <= 0x46)
+		{
+			total = 16 * total + code - 55;
+		}
+		else if (0x61 <= code && code <= 0x66)
+		{
+			total = 16 * total + code - 87;
+		}
+		else
+		{
+			break;
+		}
+	}
+	return _Utils_Tuple2(offset, total);
+});
+
+
+
+// FIND STRING
+
+
+var _Parser_findSubString = F5(function(smallString, offset, row, col, bigString)
+{
+	var newOffset = bigString.indexOf(smallString, offset);
+	var target = newOffset < 0 ? bigString.length : newOffset + smallString.length;
+
+	while (offset < target)
+	{
+		var code = bigString.charCodeAt(offset++);
+		code === 0x000A /* \n */
+			? ( col=1, row++ )
+			: ( col++, (code & 0xF800) === 0xD800 && offset++ )
+	}
+
+	return _Utils_Tuple3(newOffset, row, col);
+});
 var $elm$core$Basics$EQ = {$: 'EQ'};
 var $elm$core$Basics$GT = {$: 'GT'};
 var $elm$core$Basics$LT = {$: 'LT'};
@@ -6515,6 +6645,15 @@ var $author$project$Main$PasswordChange = function (a) {
 	return {$: 'PasswordChange', a: a};
 };
 var $elm$html$Html$button = _VirtualDom_node('button');
+var $elm$json$Json$Encode$string = _Json_wrap;
+var $elm$html$Html$Attributes$stringProperty = F2(
+	function (key, string) {
+		return A2(
+			_VirtualDom_property,
+			key,
+			$elm$json$Json$Encode$string(string));
+	});
+var $elm$html$Html$Attributes$class = $elm$html$Html$Attributes$stringProperty('className');
 var $elm$html$Html$div = _VirtualDom_node('div');
 var $elm$html$Html$input = _VirtualDom_node('input');
 var $elm$virtual_dom$VirtualDom$Normal = function (a) {
@@ -6565,25 +6704,1813 @@ var $elm$html$Html$Events$onInput = function (tagger) {
 			$elm$html$Html$Events$alwaysStop,
 			A2($elm$json$Json$Decode$map, tagger, $elm$html$Html$Events$targetValue)));
 };
+var $elm$core$List$append = F2(
+	function (xs, ys) {
+		if (!ys.b) {
+			return xs;
+		} else {
+			return A3($elm$core$List$foldr, $elm$core$List$cons, ys, xs);
+		}
+	});
+var $author$project$Main$classBystatus = function (status) {
+	return $elm$html$Html$Attributes$class(
+		(status === 'Närvarande') ? 'green' : ((status === 'Giltigt frånvarande') ? 'gul' : ((status === 'Annan aktivitet') ? 'blue' : ((status === 'Ogiltig frånvarande') ? 'red' : ''))));
+};
+var $elm$html$Html$span = _VirtualDom_node('span');
 var $elm$virtual_dom$VirtualDom$text = _VirtualDom_text;
 var $elm$html$Html$text = $elm$virtual_dom$VirtualDom$text;
+var $author$project$Main$exempel = function (status) {
+	return A2(
+		$elm$html$Html$span,
+		_List_fromArray(
+			[
+				$author$project$Main$classBystatus(status)
+			]),
+		_List_fromArray(
+			[
+				$elm$html$Html$text(status)
+			]));
+};
+var $ryannhg$date_format$DateFormat$Language$Language = F6(
+	function (toMonthName, toMonthAbbreviation, toWeekdayName, toWeekdayAbbreviation, toAmPm, toOrdinalSuffix) {
+		return {toAmPm: toAmPm, toMonthAbbreviation: toMonthAbbreviation, toMonthName: toMonthName, toOrdinalSuffix: toOrdinalSuffix, toWeekdayAbbreviation: toWeekdayAbbreviation, toWeekdayName: toWeekdayName};
+	});
+var $ryannhg$date_format$DateFormat$Language$toEnglishAmPm = function (hour) {
+	return (hour > 11) ? 'pm' : 'am';
+};
+var $ryannhg$date_format$DateFormat$Language$toEnglishMonthName = function (month) {
+	switch (month.$) {
+		case 'Jan':
+			return 'January';
+		case 'Feb':
+			return 'February';
+		case 'Mar':
+			return 'March';
+		case 'Apr':
+			return 'April';
+		case 'May':
+			return 'May';
+		case 'Jun':
+			return 'June';
+		case 'Jul':
+			return 'July';
+		case 'Aug':
+			return 'August';
+		case 'Sep':
+			return 'September';
+		case 'Oct':
+			return 'October';
+		case 'Nov':
+			return 'November';
+		default:
+			return 'December';
+	}
+};
+var $elm$core$Basics$modBy = _Basics_modBy;
+var $ryannhg$date_format$DateFormat$Language$toEnglishSuffix = function (num) {
+	var _v0 = A2($elm$core$Basics$modBy, 100, num);
+	switch (_v0) {
+		case 11:
+			return 'th';
+		case 12:
+			return 'th';
+		case 13:
+			return 'th';
+		default:
+			var _v1 = A2($elm$core$Basics$modBy, 10, num);
+			switch (_v1) {
+				case 1:
+					return 'st';
+				case 2:
+					return 'nd';
+				case 3:
+					return 'rd';
+				default:
+					return 'th';
+			}
+	}
+};
+var $ryannhg$date_format$DateFormat$Language$toEnglishWeekdayName = function (weekday) {
+	switch (weekday.$) {
+		case 'Mon':
+			return 'Monday';
+		case 'Tue':
+			return 'Tuesday';
+		case 'Wed':
+			return 'Wednesday';
+		case 'Thu':
+			return 'Thursday';
+		case 'Fri':
+			return 'Friday';
+		case 'Sat':
+			return 'Saturday';
+		default:
+			return 'Sunday';
+	}
+};
+var $ryannhg$date_format$DateFormat$Language$english = A6(
+	$ryannhg$date_format$DateFormat$Language$Language,
+	$ryannhg$date_format$DateFormat$Language$toEnglishMonthName,
+	A2(
+		$elm$core$Basics$composeR,
+		$ryannhg$date_format$DateFormat$Language$toEnglishMonthName,
+		$elm$core$String$left(3)),
+	$ryannhg$date_format$DateFormat$Language$toEnglishWeekdayName,
+	A2(
+		$elm$core$Basics$composeR,
+		$ryannhg$date_format$DateFormat$Language$toEnglishWeekdayName,
+		$elm$core$String$left(3)),
+	$ryannhg$date_format$DateFormat$Language$toEnglishAmPm,
+	$ryannhg$date_format$DateFormat$Language$toEnglishSuffix);
+var $elm$time$Time$flooredDiv = F2(
+	function (numerator, denominator) {
+		return $elm$core$Basics$floor(numerator / denominator);
+	});
+var $elm$time$Time$posixToMillis = function (_v0) {
+	var millis = _v0.a;
+	return millis;
+};
+var $elm$time$Time$toAdjustedMinutesHelp = F3(
+	function (defaultOffset, posixMinutes, eras) {
+		toAdjustedMinutesHelp:
+		while (true) {
+			if (!eras.b) {
+				return posixMinutes + defaultOffset;
+			} else {
+				var era = eras.a;
+				var olderEras = eras.b;
+				if (_Utils_cmp(era.start, posixMinutes) < 0) {
+					return posixMinutes + era.offset;
+				} else {
+					var $temp$defaultOffset = defaultOffset,
+						$temp$posixMinutes = posixMinutes,
+						$temp$eras = olderEras;
+					defaultOffset = $temp$defaultOffset;
+					posixMinutes = $temp$posixMinutes;
+					eras = $temp$eras;
+					continue toAdjustedMinutesHelp;
+				}
+			}
+		}
+	});
+var $elm$time$Time$toAdjustedMinutes = F2(
+	function (_v0, time) {
+		var defaultOffset = _v0.a;
+		var eras = _v0.b;
+		return A3(
+			$elm$time$Time$toAdjustedMinutesHelp,
+			defaultOffset,
+			A2(
+				$elm$time$Time$flooredDiv,
+				$elm$time$Time$posixToMillis(time),
+				60000),
+			eras);
+	});
+var $elm$time$Time$toHour = F2(
+	function (zone, time) {
+		return A2(
+			$elm$core$Basics$modBy,
+			24,
+			A2(
+				$elm$time$Time$flooredDiv,
+				A2($elm$time$Time$toAdjustedMinutes, zone, time),
+				60));
+	});
+var $ryannhg$date_format$DateFormat$amPm = F3(
+	function (language, zone, posix) {
+		return language.toAmPm(
+			A2($elm$time$Time$toHour, zone, posix));
+	});
+var $elm$core$Basics$negate = function (n) {
+	return -n;
+};
+var $elm$time$Time$toCivil = function (minutes) {
+	var rawDay = A2($elm$time$Time$flooredDiv, minutes, 60 * 24) + 719468;
+	var era = (((rawDay >= 0) ? rawDay : (rawDay - 146096)) / 146097) | 0;
+	var dayOfEra = rawDay - (era * 146097);
+	var yearOfEra = ((((dayOfEra - ((dayOfEra / 1460) | 0)) + ((dayOfEra / 36524) | 0)) - ((dayOfEra / 146096) | 0)) / 365) | 0;
+	var dayOfYear = dayOfEra - (((365 * yearOfEra) + ((yearOfEra / 4) | 0)) - ((yearOfEra / 100) | 0));
+	var mp = (((5 * dayOfYear) + 2) / 153) | 0;
+	var month = mp + ((mp < 10) ? 3 : (-9));
+	var year = yearOfEra + (era * 400);
+	return {
+		day: (dayOfYear - ((((153 * mp) + 2) / 5) | 0)) + 1,
+		month: month,
+		year: year + ((month <= 2) ? 1 : 0)
+	};
+};
+var $elm$time$Time$toDay = F2(
+	function (zone, time) {
+		return $elm$time$Time$toCivil(
+			A2($elm$time$Time$toAdjustedMinutes, zone, time)).day;
+	});
+var $ryannhg$date_format$DateFormat$dayOfMonth = $elm$time$Time$toDay;
+var $elm$time$Time$Sun = {$: 'Sun'};
+var $elm$time$Time$Fri = {$: 'Fri'};
+var $elm$time$Time$Mon = {$: 'Mon'};
+var $elm$time$Time$Sat = {$: 'Sat'};
+var $elm$time$Time$Thu = {$: 'Thu'};
+var $elm$time$Time$Tue = {$: 'Tue'};
+var $elm$time$Time$Wed = {$: 'Wed'};
+var $ryannhg$date_format$DateFormat$days = _List_fromArray(
+	[$elm$time$Time$Sun, $elm$time$Time$Mon, $elm$time$Time$Tue, $elm$time$Time$Wed, $elm$time$Time$Thu, $elm$time$Time$Fri, $elm$time$Time$Sat]);
+var $elm$core$List$filter = F2(
+	function (isGood, list) {
+		return A3(
+			$elm$core$List$foldr,
+			F2(
+				function (x, xs) {
+					return isGood(x) ? A2($elm$core$List$cons, x, xs) : xs;
+				}),
+			_List_Nil,
+			list);
+	});
+var $elm$core$List$head = function (list) {
+	if (list.b) {
+		var x = list.a;
+		var xs = list.b;
+		return $elm$core$Maybe$Just(x);
+	} else {
+		return $elm$core$Maybe$Nothing;
+	}
+};
+var $elm$time$Time$toWeekday = F2(
+	function (zone, time) {
+		var _v0 = A2(
+			$elm$core$Basics$modBy,
+			7,
+			A2(
+				$elm$time$Time$flooredDiv,
+				A2($elm$time$Time$toAdjustedMinutes, zone, time),
+				60 * 24));
+		switch (_v0) {
+			case 0:
+				return $elm$time$Time$Thu;
+			case 1:
+				return $elm$time$Time$Fri;
+			case 2:
+				return $elm$time$Time$Sat;
+			case 3:
+				return $elm$time$Time$Sun;
+			case 4:
+				return $elm$time$Time$Mon;
+			case 5:
+				return $elm$time$Time$Tue;
+			default:
+				return $elm$time$Time$Wed;
+		}
+	});
+var $elm$core$Maybe$withDefault = F2(
+	function (_default, maybe) {
+		if (maybe.$ === 'Just') {
+			var value = maybe.a;
+			return value;
+		} else {
+			return _default;
+		}
+	});
+var $ryannhg$date_format$DateFormat$dayOfWeek = F2(
+	function (zone, posix) {
+		return function (_v1) {
+			var i = _v1.a;
+			return i;
+		}(
+			A2(
+				$elm$core$Maybe$withDefault,
+				_Utils_Tuple2(0, $elm$time$Time$Sun),
+				$elm$core$List$head(
+					A2(
+						$elm$core$List$filter,
+						function (_v0) {
+							var day = _v0.b;
+							return _Utils_eq(
+								day,
+								A2($elm$time$Time$toWeekday, zone, posix));
+						},
+						A2(
+							$elm$core$List$indexedMap,
+							F2(
+								function (i, day) {
+									return _Utils_Tuple2(i, day);
+								}),
+							$ryannhg$date_format$DateFormat$days)))));
+	});
+var $elm$core$Basics$neq = _Utils_notEqual;
+var $ryannhg$date_format$DateFormat$isLeapYear = function (year_) {
+	return (!(!A2($elm$core$Basics$modBy, 4, year_))) ? false : ((!(!A2($elm$core$Basics$modBy, 100, year_))) ? true : ((!(!A2($elm$core$Basics$modBy, 400, year_))) ? false : true));
+};
+var $ryannhg$date_format$DateFormat$daysInMonth = F2(
+	function (year_, month) {
+		switch (month.$) {
+			case 'Jan':
+				return 31;
+			case 'Feb':
+				return $ryannhg$date_format$DateFormat$isLeapYear(year_) ? 29 : 28;
+			case 'Mar':
+				return 31;
+			case 'Apr':
+				return 30;
+			case 'May':
+				return 31;
+			case 'Jun':
+				return 30;
+			case 'Jul':
+				return 31;
+			case 'Aug':
+				return 31;
+			case 'Sep':
+				return 30;
+			case 'Oct':
+				return 31;
+			case 'Nov':
+				return 30;
+			default:
+				return 31;
+		}
+	});
+var $elm$time$Time$Jan = {$: 'Jan'};
+var $elm$time$Time$Apr = {$: 'Apr'};
+var $elm$time$Time$Aug = {$: 'Aug'};
+var $elm$time$Time$Dec = {$: 'Dec'};
+var $elm$time$Time$Feb = {$: 'Feb'};
+var $elm$time$Time$Jul = {$: 'Jul'};
+var $elm$time$Time$Jun = {$: 'Jun'};
+var $elm$time$Time$Mar = {$: 'Mar'};
+var $elm$time$Time$May = {$: 'May'};
+var $elm$time$Time$Nov = {$: 'Nov'};
+var $elm$time$Time$Oct = {$: 'Oct'};
+var $elm$time$Time$Sep = {$: 'Sep'};
+var $ryannhg$date_format$DateFormat$months = _List_fromArray(
+	[$elm$time$Time$Jan, $elm$time$Time$Feb, $elm$time$Time$Mar, $elm$time$Time$Apr, $elm$time$Time$May, $elm$time$Time$Jun, $elm$time$Time$Jul, $elm$time$Time$Aug, $elm$time$Time$Sep, $elm$time$Time$Oct, $elm$time$Time$Nov, $elm$time$Time$Dec]);
+var $elm$time$Time$toMonth = F2(
+	function (zone, time) {
+		var _v0 = $elm$time$Time$toCivil(
+			A2($elm$time$Time$toAdjustedMinutes, zone, time)).month;
+		switch (_v0) {
+			case 1:
+				return $elm$time$Time$Jan;
+			case 2:
+				return $elm$time$Time$Feb;
+			case 3:
+				return $elm$time$Time$Mar;
+			case 4:
+				return $elm$time$Time$Apr;
+			case 5:
+				return $elm$time$Time$May;
+			case 6:
+				return $elm$time$Time$Jun;
+			case 7:
+				return $elm$time$Time$Jul;
+			case 8:
+				return $elm$time$Time$Aug;
+			case 9:
+				return $elm$time$Time$Sep;
+			case 10:
+				return $elm$time$Time$Oct;
+			case 11:
+				return $elm$time$Time$Nov;
+			default:
+				return $elm$time$Time$Dec;
+		}
+	});
+var $ryannhg$date_format$DateFormat$monthPair = F2(
+	function (zone, posix) {
+		return A2(
+			$elm$core$Maybe$withDefault,
+			_Utils_Tuple2(0, $elm$time$Time$Jan),
+			$elm$core$List$head(
+				A2(
+					$elm$core$List$filter,
+					function (_v0) {
+						var i = _v0.a;
+						var m = _v0.b;
+						return _Utils_eq(
+							m,
+							A2($elm$time$Time$toMonth, zone, posix));
+					},
+					A2(
+						$elm$core$List$indexedMap,
+						F2(
+							function (a, b) {
+								return _Utils_Tuple2(a, b);
+							}),
+						$ryannhg$date_format$DateFormat$months))));
+	});
+var $ryannhg$date_format$DateFormat$monthNumber_ = F2(
+	function (zone, posix) {
+		return 1 + function (_v0) {
+			var i = _v0.a;
+			var m = _v0.b;
+			return i;
+		}(
+			A2($ryannhg$date_format$DateFormat$monthPair, zone, posix));
+	});
+var $elm$core$List$sum = function (numbers) {
+	return A3($elm$core$List$foldl, $elm$core$Basics$add, 0, numbers);
+};
+var $elm$core$List$takeReverse = F3(
+	function (n, list, kept) {
+		takeReverse:
+		while (true) {
+			if (n <= 0) {
+				return kept;
+			} else {
+				if (!list.b) {
+					return kept;
+				} else {
+					var x = list.a;
+					var xs = list.b;
+					var $temp$n = n - 1,
+						$temp$list = xs,
+						$temp$kept = A2($elm$core$List$cons, x, kept);
+					n = $temp$n;
+					list = $temp$list;
+					kept = $temp$kept;
+					continue takeReverse;
+				}
+			}
+		}
+	});
+var $elm$core$List$takeTailRec = F2(
+	function (n, list) {
+		return $elm$core$List$reverse(
+			A3($elm$core$List$takeReverse, n, list, _List_Nil));
+	});
+var $elm$core$List$takeFast = F3(
+	function (ctr, n, list) {
+		if (n <= 0) {
+			return _List_Nil;
+		} else {
+			var _v0 = _Utils_Tuple2(n, list);
+			_v0$1:
+			while (true) {
+				_v0$5:
+				while (true) {
+					if (!_v0.b.b) {
+						return list;
+					} else {
+						if (_v0.b.b.b) {
+							switch (_v0.a) {
+								case 1:
+									break _v0$1;
+								case 2:
+									var _v2 = _v0.b;
+									var x = _v2.a;
+									var _v3 = _v2.b;
+									var y = _v3.a;
+									return _List_fromArray(
+										[x, y]);
+								case 3:
+									if (_v0.b.b.b.b) {
+										var _v4 = _v0.b;
+										var x = _v4.a;
+										var _v5 = _v4.b;
+										var y = _v5.a;
+										var _v6 = _v5.b;
+										var z = _v6.a;
+										return _List_fromArray(
+											[x, y, z]);
+									} else {
+										break _v0$5;
+									}
+								default:
+									if (_v0.b.b.b.b && _v0.b.b.b.b.b) {
+										var _v7 = _v0.b;
+										var x = _v7.a;
+										var _v8 = _v7.b;
+										var y = _v8.a;
+										var _v9 = _v8.b;
+										var z = _v9.a;
+										var _v10 = _v9.b;
+										var w = _v10.a;
+										var tl = _v10.b;
+										return (ctr > 1000) ? A2(
+											$elm$core$List$cons,
+											x,
+											A2(
+												$elm$core$List$cons,
+												y,
+												A2(
+													$elm$core$List$cons,
+													z,
+													A2(
+														$elm$core$List$cons,
+														w,
+														A2($elm$core$List$takeTailRec, n - 4, tl))))) : A2(
+											$elm$core$List$cons,
+											x,
+											A2(
+												$elm$core$List$cons,
+												y,
+												A2(
+													$elm$core$List$cons,
+													z,
+													A2(
+														$elm$core$List$cons,
+														w,
+														A3($elm$core$List$takeFast, ctr + 1, n - 4, tl)))));
+									} else {
+										break _v0$5;
+									}
+							}
+						} else {
+							if (_v0.a === 1) {
+								break _v0$1;
+							} else {
+								break _v0$5;
+							}
+						}
+					}
+				}
+				return list;
+			}
+			var _v1 = _v0.b;
+			var x = _v1.a;
+			return _List_fromArray(
+				[x]);
+		}
+	});
+var $elm$core$List$take = F2(
+	function (n, list) {
+		return A3($elm$core$List$takeFast, 0, n, list);
+	});
+var $elm$time$Time$toYear = F2(
+	function (zone, time) {
+		return $elm$time$Time$toCivil(
+			A2($elm$time$Time$toAdjustedMinutes, zone, time)).year;
+	});
+var $ryannhg$date_format$DateFormat$dayOfYear = F2(
+	function (zone, posix) {
+		var monthsBeforeThisOne = A2(
+			$elm$core$List$take,
+			A2($ryannhg$date_format$DateFormat$monthNumber_, zone, posix) - 1,
+			$ryannhg$date_format$DateFormat$months);
+		var daysBeforeThisMonth = $elm$core$List$sum(
+			A2(
+				$elm$core$List$map,
+				$ryannhg$date_format$DateFormat$daysInMonth(
+					A2($elm$time$Time$toYear, zone, posix)),
+				monthsBeforeThisOne));
+		return daysBeforeThisMonth + A2($ryannhg$date_format$DateFormat$dayOfMonth, zone, posix);
+	});
+var $ryannhg$date_format$DateFormat$quarter = F2(
+	function (zone, posix) {
+		return (A2($ryannhg$date_format$DateFormat$monthNumber_, zone, posix) / 4) | 0;
+	});
+var $elm$core$String$right = F2(
+	function (n, string) {
+		return (n < 1) ? '' : A3(
+			$elm$core$String$slice,
+			-n,
+			$elm$core$String$length(string),
+			string);
+	});
+var $ryannhg$date_format$DateFormat$toFixedLength = F2(
+	function (totalChars, num) {
+		var numStr = $elm$core$String$fromInt(num);
+		var numZerosNeeded = totalChars - $elm$core$String$length(numStr);
+		var zeros = A2(
+			$elm$core$String$join,
+			'',
+			A2(
+				$elm$core$List$map,
+				function (_v0) {
+					return '0';
+				},
+				A2($elm$core$List$range, 1, numZerosNeeded)));
+		return _Utils_ap(zeros, numStr);
+	});
+var $elm$core$String$toLower = _String_toLower;
+var $elm$time$Time$toMillis = F2(
+	function (_v0, time) {
+		return A2(
+			$elm$core$Basics$modBy,
+			1000,
+			$elm$time$Time$posixToMillis(time));
+	});
+var $elm$time$Time$toMinute = F2(
+	function (zone, time) {
+		return A2(
+			$elm$core$Basics$modBy,
+			60,
+			A2($elm$time$Time$toAdjustedMinutes, zone, time));
+	});
+var $ryannhg$date_format$DateFormat$toNonMilitary = function (num) {
+	return (!num) ? 12 : ((num <= 12) ? num : (num - 12));
+};
+var $elm$time$Time$toSecond = F2(
+	function (_v0, time) {
+		return A2(
+			$elm$core$Basics$modBy,
+			60,
+			A2(
+				$elm$time$Time$flooredDiv,
+				$elm$time$Time$posixToMillis(time),
+				1000));
+	});
+var $elm$core$String$toUpper = _String_toUpper;
+var $elm$time$Time$Posix = function (a) {
+	return {$: 'Posix', a: a};
+};
+var $elm$time$Time$millisToPosix = $elm$time$Time$Posix;
+var $elm$core$Basics$round = _Basics_round;
+var $ryannhg$date_format$DateFormat$millisecondsPerYear = $elm$core$Basics$round((((1000 * 60) * 60) * 24) * 365.25);
+var $ryannhg$date_format$DateFormat$firstDayOfYear = F2(
+	function (zone, time) {
+		return $elm$time$Time$millisToPosix(
+			$ryannhg$date_format$DateFormat$millisecondsPerYear * A2($elm$time$Time$toYear, zone, time));
+	});
+var $ryannhg$date_format$DateFormat$weekOfYear = F2(
+	function (zone, posix) {
+		var firstDay = A2($ryannhg$date_format$DateFormat$firstDayOfYear, zone, posix);
+		var firstDayOffset = A2($ryannhg$date_format$DateFormat$dayOfWeek, zone, firstDay);
+		var daysSoFar = A2($ryannhg$date_format$DateFormat$dayOfYear, zone, posix);
+		return (((daysSoFar + firstDayOffset) / 7) | 0) + 1;
+	});
+var $ryannhg$date_format$DateFormat$year = F2(
+	function (zone, time) {
+		return $elm$core$String$fromInt(
+			A2($elm$time$Time$toYear, zone, time));
+	});
+var $ryannhg$date_format$DateFormat$piece = F4(
+	function (language, zone, posix, token) {
+		switch (token.$) {
+			case 'MonthNumber':
+				return $elm$core$String$fromInt(
+					A2($ryannhg$date_format$DateFormat$monthNumber_, zone, posix));
+			case 'MonthSuffix':
+				return function (num) {
+					return _Utils_ap(
+						$elm$core$String$fromInt(num),
+						language.toOrdinalSuffix(num));
+				}(
+					A2($ryannhg$date_format$DateFormat$monthNumber_, zone, posix));
+			case 'MonthFixed':
+				return A2(
+					$ryannhg$date_format$DateFormat$toFixedLength,
+					2,
+					A2($ryannhg$date_format$DateFormat$monthNumber_, zone, posix));
+			case 'MonthNameAbbreviated':
+				return language.toMonthAbbreviation(
+					A2($elm$time$Time$toMonth, zone, posix));
+			case 'MonthNameFull':
+				return language.toMonthName(
+					A2($elm$time$Time$toMonth, zone, posix));
+			case 'QuarterNumber':
+				return $elm$core$String$fromInt(
+					1 + A2($ryannhg$date_format$DateFormat$quarter, zone, posix));
+			case 'QuarterSuffix':
+				return function (num) {
+					return _Utils_ap(
+						$elm$core$String$fromInt(num),
+						language.toOrdinalSuffix(num));
+				}(
+					1 + A2($ryannhg$date_format$DateFormat$quarter, zone, posix));
+			case 'DayOfMonthNumber':
+				return $elm$core$String$fromInt(
+					A2($ryannhg$date_format$DateFormat$dayOfMonth, zone, posix));
+			case 'DayOfMonthSuffix':
+				return function (num) {
+					return _Utils_ap(
+						$elm$core$String$fromInt(num),
+						language.toOrdinalSuffix(num));
+				}(
+					A2($ryannhg$date_format$DateFormat$dayOfMonth, zone, posix));
+			case 'DayOfMonthFixed':
+				return A2(
+					$ryannhg$date_format$DateFormat$toFixedLength,
+					2,
+					A2($ryannhg$date_format$DateFormat$dayOfMonth, zone, posix));
+			case 'DayOfYearNumber':
+				return $elm$core$String$fromInt(
+					A2($ryannhg$date_format$DateFormat$dayOfYear, zone, posix));
+			case 'DayOfYearSuffix':
+				return function (num) {
+					return _Utils_ap(
+						$elm$core$String$fromInt(num),
+						language.toOrdinalSuffix(num));
+				}(
+					A2($ryannhg$date_format$DateFormat$dayOfYear, zone, posix));
+			case 'DayOfYearFixed':
+				return A2(
+					$ryannhg$date_format$DateFormat$toFixedLength,
+					3,
+					A2($ryannhg$date_format$DateFormat$dayOfYear, zone, posix));
+			case 'DayOfWeekNumber':
+				return $elm$core$String$fromInt(
+					A2($ryannhg$date_format$DateFormat$dayOfWeek, zone, posix));
+			case 'DayOfWeekSuffix':
+				return function (num) {
+					return _Utils_ap(
+						$elm$core$String$fromInt(num),
+						language.toOrdinalSuffix(num));
+				}(
+					A2($ryannhg$date_format$DateFormat$dayOfWeek, zone, posix));
+			case 'DayOfWeekNameAbbreviated':
+				return language.toWeekdayAbbreviation(
+					A2($elm$time$Time$toWeekday, zone, posix));
+			case 'DayOfWeekNameFull':
+				return language.toWeekdayName(
+					A2($elm$time$Time$toWeekday, zone, posix));
+			case 'WeekOfYearNumber':
+				return $elm$core$String$fromInt(
+					A2($ryannhg$date_format$DateFormat$weekOfYear, zone, posix));
+			case 'WeekOfYearSuffix':
+				return function (num) {
+					return _Utils_ap(
+						$elm$core$String$fromInt(num),
+						language.toOrdinalSuffix(num));
+				}(
+					A2($ryannhg$date_format$DateFormat$weekOfYear, zone, posix));
+			case 'WeekOfYearFixed':
+				return A2(
+					$ryannhg$date_format$DateFormat$toFixedLength,
+					2,
+					A2($ryannhg$date_format$DateFormat$weekOfYear, zone, posix));
+			case 'YearNumberLastTwo':
+				return A2(
+					$elm$core$String$right,
+					2,
+					A2($ryannhg$date_format$DateFormat$year, zone, posix));
+			case 'YearNumber':
+				return A2($ryannhg$date_format$DateFormat$year, zone, posix);
+			case 'AmPmUppercase':
+				return $elm$core$String$toUpper(
+					A3($ryannhg$date_format$DateFormat$amPm, language, zone, posix));
+			case 'AmPmLowercase':
+				return $elm$core$String$toLower(
+					A3($ryannhg$date_format$DateFormat$amPm, language, zone, posix));
+			case 'HourMilitaryNumber':
+				return $elm$core$String$fromInt(
+					A2($elm$time$Time$toHour, zone, posix));
+			case 'HourMilitaryFixed':
+				return A2(
+					$ryannhg$date_format$DateFormat$toFixedLength,
+					2,
+					A2($elm$time$Time$toHour, zone, posix));
+			case 'HourNumber':
+				return $elm$core$String$fromInt(
+					$ryannhg$date_format$DateFormat$toNonMilitary(
+						A2($elm$time$Time$toHour, zone, posix)));
+			case 'HourFixed':
+				return A2(
+					$ryannhg$date_format$DateFormat$toFixedLength,
+					2,
+					$ryannhg$date_format$DateFormat$toNonMilitary(
+						A2($elm$time$Time$toHour, zone, posix)));
+			case 'HourMilitaryFromOneNumber':
+				return $elm$core$String$fromInt(
+					1 + A2($elm$time$Time$toHour, zone, posix));
+			case 'HourMilitaryFromOneFixed':
+				return A2(
+					$ryannhg$date_format$DateFormat$toFixedLength,
+					2,
+					1 + A2($elm$time$Time$toHour, zone, posix));
+			case 'MinuteNumber':
+				return $elm$core$String$fromInt(
+					A2($elm$time$Time$toMinute, zone, posix));
+			case 'MinuteFixed':
+				return A2(
+					$ryannhg$date_format$DateFormat$toFixedLength,
+					2,
+					A2($elm$time$Time$toMinute, zone, posix));
+			case 'SecondNumber':
+				return $elm$core$String$fromInt(
+					A2($elm$time$Time$toSecond, zone, posix));
+			case 'SecondFixed':
+				return A2(
+					$ryannhg$date_format$DateFormat$toFixedLength,
+					2,
+					A2($elm$time$Time$toSecond, zone, posix));
+			case 'MillisecondNumber':
+				return $elm$core$String$fromInt(
+					A2($elm$time$Time$toMillis, zone, posix));
+			case 'MillisecondFixed':
+				return A2(
+					$ryannhg$date_format$DateFormat$toFixedLength,
+					3,
+					A2($elm$time$Time$toMillis, zone, posix));
+			default:
+				var string = token.a;
+				return string;
+		}
+	});
+var $ryannhg$date_format$DateFormat$formatWithLanguage = F4(
+	function (language, tokens, zone, time) {
+		return A2(
+			$elm$core$String$join,
+			'',
+			A2(
+				$elm$core$List$map,
+				A3($ryannhg$date_format$DateFormat$piece, language, zone, time),
+				tokens));
+	});
+var $ryannhg$date_format$DateFormat$format = $ryannhg$date_format$DateFormat$formatWithLanguage($ryannhg$date_format$DateFormat$Language$english);
+var $elm$parser$Parser$Advanced$Bad = F2(
+	function (a, b) {
+		return {$: 'Bad', a: a, b: b};
+	});
+var $elm$parser$Parser$Advanced$Good = F3(
+	function (a, b, c) {
+		return {$: 'Good', a: a, b: b, c: c};
+	});
+var $elm$parser$Parser$Advanced$Parser = function (a) {
+	return {$: 'Parser', a: a};
+};
+var $elm$parser$Parser$Advanced$andThen = F2(
+	function (callback, _v0) {
+		var parseA = _v0.a;
+		return $elm$parser$Parser$Advanced$Parser(
+			function (s0) {
+				var _v1 = parseA(s0);
+				if (_v1.$ === 'Bad') {
+					var p = _v1.a;
+					var x = _v1.b;
+					return A2($elm$parser$Parser$Advanced$Bad, p, x);
+				} else {
+					var p1 = _v1.a;
+					var a = _v1.b;
+					var s1 = _v1.c;
+					var _v2 = callback(a);
+					var parseB = _v2.a;
+					var _v3 = parseB(s1);
+					if (_v3.$ === 'Bad') {
+						var p2 = _v3.a;
+						var x = _v3.b;
+						return A2($elm$parser$Parser$Advanced$Bad, p1 || p2, x);
+					} else {
+						var p2 = _v3.a;
+						var b = _v3.b;
+						var s2 = _v3.c;
+						return A3($elm$parser$Parser$Advanced$Good, p1 || p2, b, s2);
+					}
+				}
+			});
+	});
+var $elm$parser$Parser$andThen = $elm$parser$Parser$Advanced$andThen;
+var $elm$parser$Parser$ExpectingEnd = {$: 'ExpectingEnd'};
+var $elm$parser$Parser$Advanced$AddRight = F2(
+	function (a, b) {
+		return {$: 'AddRight', a: a, b: b};
+	});
+var $elm$parser$Parser$Advanced$DeadEnd = F4(
+	function (row, col, problem, contextStack) {
+		return {col: col, contextStack: contextStack, problem: problem, row: row};
+	});
+var $elm$parser$Parser$Advanced$Empty = {$: 'Empty'};
+var $elm$parser$Parser$Advanced$fromState = F2(
+	function (s, x) {
+		return A2(
+			$elm$parser$Parser$Advanced$AddRight,
+			$elm$parser$Parser$Advanced$Empty,
+			A4($elm$parser$Parser$Advanced$DeadEnd, s.row, s.col, x, s.context));
+	});
+var $elm$parser$Parser$Advanced$end = function (x) {
+	return $elm$parser$Parser$Advanced$Parser(
+		function (s) {
+			return _Utils_eq(
+				$elm$core$String$length(s.src),
+				s.offset) ? A3($elm$parser$Parser$Advanced$Good, false, _Utils_Tuple0, s) : A2(
+				$elm$parser$Parser$Advanced$Bad,
+				false,
+				A2($elm$parser$Parser$Advanced$fromState, s, x));
+		});
+};
+var $elm$parser$Parser$end = $elm$parser$Parser$Advanced$end($elm$parser$Parser$ExpectingEnd);
+var $elm$parser$Parser$Advanced$isSubChar = _Parser_isSubChar;
+var $elm$parser$Parser$Advanced$chompWhileHelp = F5(
+	function (isGood, offset, row, col, s0) {
+		chompWhileHelp:
+		while (true) {
+			var newOffset = A3($elm$parser$Parser$Advanced$isSubChar, isGood, offset, s0.src);
+			if (_Utils_eq(newOffset, -1)) {
+				return A3(
+					$elm$parser$Parser$Advanced$Good,
+					_Utils_cmp(s0.offset, offset) < 0,
+					_Utils_Tuple0,
+					{col: col, context: s0.context, indent: s0.indent, offset: offset, row: row, src: s0.src});
+			} else {
+				if (_Utils_eq(newOffset, -2)) {
+					var $temp$isGood = isGood,
+						$temp$offset = offset + 1,
+						$temp$row = row + 1,
+						$temp$col = 1,
+						$temp$s0 = s0;
+					isGood = $temp$isGood;
+					offset = $temp$offset;
+					row = $temp$row;
+					col = $temp$col;
+					s0 = $temp$s0;
+					continue chompWhileHelp;
+				} else {
+					var $temp$isGood = isGood,
+						$temp$offset = newOffset,
+						$temp$row = row,
+						$temp$col = col + 1,
+						$temp$s0 = s0;
+					isGood = $temp$isGood;
+					offset = $temp$offset;
+					row = $temp$row;
+					col = $temp$col;
+					s0 = $temp$s0;
+					continue chompWhileHelp;
+				}
+			}
+		}
+	});
+var $elm$parser$Parser$Advanced$chompWhile = function (isGood) {
+	return $elm$parser$Parser$Advanced$Parser(
+		function (s) {
+			return A5($elm$parser$Parser$Advanced$chompWhileHelp, isGood, s.offset, s.row, s.col, s);
+		});
+};
+var $elm$parser$Parser$chompWhile = $elm$parser$Parser$Advanced$chompWhile;
+var $elm$core$Basics$always = F2(
+	function (a, _v0) {
+		return a;
+	});
+var $elm$parser$Parser$Advanced$mapChompedString = F2(
+	function (func, _v0) {
+		var parse = _v0.a;
+		return $elm$parser$Parser$Advanced$Parser(
+			function (s0) {
+				var _v1 = parse(s0);
+				if (_v1.$ === 'Bad') {
+					var p = _v1.a;
+					var x = _v1.b;
+					return A2($elm$parser$Parser$Advanced$Bad, p, x);
+				} else {
+					var p = _v1.a;
+					var a = _v1.b;
+					var s1 = _v1.c;
+					return A3(
+						$elm$parser$Parser$Advanced$Good,
+						p,
+						A2(
+							func,
+							A3($elm$core$String$slice, s0.offset, s1.offset, s0.src),
+							a),
+						s1);
+				}
+			});
+	});
+var $elm$parser$Parser$Advanced$getChompedString = function (parser) {
+	return A2($elm$parser$Parser$Advanced$mapChompedString, $elm$core$Basics$always, parser);
+};
+var $elm$parser$Parser$getChompedString = $elm$parser$Parser$Advanced$getChompedString;
+var $elm$parser$Parser$Problem = function (a) {
+	return {$: 'Problem', a: a};
+};
+var $elm$parser$Parser$Advanced$problem = function (x) {
+	return $elm$parser$Parser$Advanced$Parser(
+		function (s) {
+			return A2(
+				$elm$parser$Parser$Advanced$Bad,
+				false,
+				A2($elm$parser$Parser$Advanced$fromState, s, x));
+		});
+};
+var $elm$parser$Parser$problem = function (msg) {
+	return $elm$parser$Parser$Advanced$problem(
+		$elm$parser$Parser$Problem(msg));
+};
+var $elm$parser$Parser$Advanced$succeed = function (a) {
+	return $elm$parser$Parser$Advanced$Parser(
+		function (s) {
+			return A3($elm$parser$Parser$Advanced$Good, false, a, s);
+		});
+};
+var $elm$parser$Parser$succeed = $elm$parser$Parser$Advanced$succeed;
+var $elm$core$String$toFloat = _String_toFloat;
+var $rtfeldman$elm_iso8601_date_strings$Iso8601$fractionsOfASecondInMs = A2(
+	$elm$parser$Parser$andThen,
+	function (str) {
+		if ($elm$core$String$length(str) <= 9) {
+			var _v0 = $elm$core$String$toFloat('0.' + str);
+			if (_v0.$ === 'Just') {
+				var floatVal = _v0.a;
+				return $elm$parser$Parser$succeed(
+					$elm$core$Basics$round(floatVal * 1000));
+			} else {
+				return $elm$parser$Parser$problem('Invalid float: \"' + (str + '\"'));
+			}
+		} else {
+			return $elm$parser$Parser$problem(
+				'Expected at most 9 digits, but got ' + $elm$core$String$fromInt(
+					$elm$core$String$length(str)));
+		}
+	},
+	$elm$parser$Parser$getChompedString(
+		$elm$parser$Parser$chompWhile($elm$core$Char$isDigit)));
+var $rtfeldman$elm_iso8601_date_strings$Iso8601$fromParts = F6(
+	function (monthYearDayMs, hour, minute, second, ms, utcOffsetMinutes) {
+		return $elm$time$Time$millisToPosix((((monthYearDayMs + (((hour * 60) * 60) * 1000)) + (((minute - utcOffsetMinutes) * 60) * 1000)) + (second * 1000)) + ms);
+	});
+var $elm$parser$Parser$Advanced$map2 = F3(
+	function (func, _v0, _v1) {
+		var parseA = _v0.a;
+		var parseB = _v1.a;
+		return $elm$parser$Parser$Advanced$Parser(
+			function (s0) {
+				var _v2 = parseA(s0);
+				if (_v2.$ === 'Bad') {
+					var p = _v2.a;
+					var x = _v2.b;
+					return A2($elm$parser$Parser$Advanced$Bad, p, x);
+				} else {
+					var p1 = _v2.a;
+					var a = _v2.b;
+					var s1 = _v2.c;
+					var _v3 = parseB(s1);
+					if (_v3.$ === 'Bad') {
+						var p2 = _v3.a;
+						var x = _v3.b;
+						return A2($elm$parser$Parser$Advanced$Bad, p1 || p2, x);
+					} else {
+						var p2 = _v3.a;
+						var b = _v3.b;
+						var s2 = _v3.c;
+						return A3(
+							$elm$parser$Parser$Advanced$Good,
+							p1 || p2,
+							A2(func, a, b),
+							s2);
+					}
+				}
+			});
+	});
+var $elm$parser$Parser$Advanced$ignorer = F2(
+	function (keepParser, ignoreParser) {
+		return A3($elm$parser$Parser$Advanced$map2, $elm$core$Basics$always, keepParser, ignoreParser);
+	});
+var $elm$parser$Parser$ignorer = $elm$parser$Parser$Advanced$ignorer;
+var $elm$parser$Parser$Advanced$keeper = F2(
+	function (parseFunc, parseArg) {
+		return A3($elm$parser$Parser$Advanced$map2, $elm$core$Basics$apL, parseFunc, parseArg);
+	});
+var $elm$parser$Parser$keeper = $elm$parser$Parser$Advanced$keeper;
+var $elm$parser$Parser$Advanced$Append = F2(
+	function (a, b) {
+		return {$: 'Append', a: a, b: b};
+	});
+var $elm$parser$Parser$Advanced$oneOfHelp = F3(
+	function (s0, bag, parsers) {
+		oneOfHelp:
+		while (true) {
+			if (!parsers.b) {
+				return A2($elm$parser$Parser$Advanced$Bad, false, bag);
+			} else {
+				var parse = parsers.a.a;
+				var remainingParsers = parsers.b;
+				var _v1 = parse(s0);
+				if (_v1.$ === 'Good') {
+					var step = _v1;
+					return step;
+				} else {
+					var step = _v1;
+					var p = step.a;
+					var x = step.b;
+					if (p) {
+						return step;
+					} else {
+						var $temp$s0 = s0,
+							$temp$bag = A2($elm$parser$Parser$Advanced$Append, bag, x),
+							$temp$parsers = remainingParsers;
+						s0 = $temp$s0;
+						bag = $temp$bag;
+						parsers = $temp$parsers;
+						continue oneOfHelp;
+					}
+				}
+			}
+		}
+	});
+var $elm$parser$Parser$Advanced$oneOf = function (parsers) {
+	return $elm$parser$Parser$Advanced$Parser(
+		function (s) {
+			return A3($elm$parser$Parser$Advanced$oneOfHelp, s, $elm$parser$Parser$Advanced$Empty, parsers);
+		});
+};
+var $elm$parser$Parser$oneOf = $elm$parser$Parser$Advanced$oneOf;
+var $elm$parser$Parser$Done = function (a) {
+	return {$: 'Done', a: a};
+};
+var $elm$parser$Parser$Loop = function (a) {
+	return {$: 'Loop', a: a};
+};
+var $elm$core$String$append = _String_append;
+var $elm$parser$Parser$UnexpectedChar = {$: 'UnexpectedChar'};
+var $elm$parser$Parser$Advanced$chompIf = F2(
+	function (isGood, expecting) {
+		return $elm$parser$Parser$Advanced$Parser(
+			function (s) {
+				var newOffset = A3($elm$parser$Parser$Advanced$isSubChar, isGood, s.offset, s.src);
+				return _Utils_eq(newOffset, -1) ? A2(
+					$elm$parser$Parser$Advanced$Bad,
+					false,
+					A2($elm$parser$Parser$Advanced$fromState, s, expecting)) : (_Utils_eq(newOffset, -2) ? A3(
+					$elm$parser$Parser$Advanced$Good,
+					true,
+					_Utils_Tuple0,
+					{col: 1, context: s.context, indent: s.indent, offset: s.offset + 1, row: s.row + 1, src: s.src}) : A3(
+					$elm$parser$Parser$Advanced$Good,
+					true,
+					_Utils_Tuple0,
+					{col: s.col + 1, context: s.context, indent: s.indent, offset: newOffset, row: s.row, src: s.src}));
+			});
+	});
+var $elm$parser$Parser$chompIf = function (isGood) {
+	return A2($elm$parser$Parser$Advanced$chompIf, isGood, $elm$parser$Parser$UnexpectedChar);
+};
+var $elm$parser$Parser$Advanced$loopHelp = F4(
+	function (p, state, callback, s0) {
+		loopHelp:
+		while (true) {
+			var _v0 = callback(state);
+			var parse = _v0.a;
+			var _v1 = parse(s0);
+			if (_v1.$ === 'Good') {
+				var p1 = _v1.a;
+				var step = _v1.b;
+				var s1 = _v1.c;
+				if (step.$ === 'Loop') {
+					var newState = step.a;
+					var $temp$p = p || p1,
+						$temp$state = newState,
+						$temp$callback = callback,
+						$temp$s0 = s1;
+					p = $temp$p;
+					state = $temp$state;
+					callback = $temp$callback;
+					s0 = $temp$s0;
+					continue loopHelp;
+				} else {
+					var result = step.a;
+					return A3($elm$parser$Parser$Advanced$Good, p || p1, result, s1);
+				}
+			} else {
+				var p1 = _v1.a;
+				var x = _v1.b;
+				return A2($elm$parser$Parser$Advanced$Bad, p || p1, x);
+			}
+		}
+	});
+var $elm$parser$Parser$Advanced$loop = F2(
+	function (state, callback) {
+		return $elm$parser$Parser$Advanced$Parser(
+			function (s) {
+				return A4($elm$parser$Parser$Advanced$loopHelp, false, state, callback, s);
+			});
+	});
+var $elm$parser$Parser$Advanced$map = F2(
+	function (func, _v0) {
+		var parse = _v0.a;
+		return $elm$parser$Parser$Advanced$Parser(
+			function (s0) {
+				var _v1 = parse(s0);
+				if (_v1.$ === 'Good') {
+					var p = _v1.a;
+					var a = _v1.b;
+					var s1 = _v1.c;
+					return A3(
+						$elm$parser$Parser$Advanced$Good,
+						p,
+						func(a),
+						s1);
+				} else {
+					var p = _v1.a;
+					var x = _v1.b;
+					return A2($elm$parser$Parser$Advanced$Bad, p, x);
+				}
+			});
+	});
+var $elm$parser$Parser$map = $elm$parser$Parser$Advanced$map;
+var $elm$parser$Parser$Advanced$Done = function (a) {
+	return {$: 'Done', a: a};
+};
+var $elm$parser$Parser$Advanced$Loop = function (a) {
+	return {$: 'Loop', a: a};
+};
+var $elm$parser$Parser$toAdvancedStep = function (step) {
+	if (step.$ === 'Loop') {
+		var s = step.a;
+		return $elm$parser$Parser$Advanced$Loop(s);
+	} else {
+		var a = step.a;
+		return $elm$parser$Parser$Advanced$Done(a);
+	}
+};
+var $elm$parser$Parser$loop = F2(
+	function (state, callback) {
+		return A2(
+			$elm$parser$Parser$Advanced$loop,
+			state,
+			function (s) {
+				return A2(
+					$elm$parser$Parser$map,
+					$elm$parser$Parser$toAdvancedStep,
+					callback(s));
+			});
+	});
+var $rtfeldman$elm_iso8601_date_strings$Iso8601$paddedInt = function (quantity) {
+	var helper = function (str) {
+		if (_Utils_eq(
+			$elm$core$String$length(str),
+			quantity)) {
+			var _v0 = $elm$core$String$toInt(str);
+			if (_v0.$ === 'Just') {
+				var intVal = _v0.a;
+				return A2(
+					$elm$parser$Parser$map,
+					$elm$parser$Parser$Done,
+					$elm$parser$Parser$succeed(intVal));
+			} else {
+				return $elm$parser$Parser$problem('Invalid integer: \"' + (str + '\"'));
+			}
+		} else {
+			return A2(
+				$elm$parser$Parser$map,
+				function (nextChar) {
+					return $elm$parser$Parser$Loop(
+						A2($elm$core$String$append, str, nextChar));
+				},
+				$elm$parser$Parser$getChompedString(
+					$elm$parser$Parser$chompIf($elm$core$Char$isDigit)));
+		}
+	};
+	return A2($elm$parser$Parser$loop, '', helper);
+};
+var $elm$parser$Parser$ExpectingSymbol = function (a) {
+	return {$: 'ExpectingSymbol', a: a};
+};
+var $elm$parser$Parser$Advanced$Token = F2(
+	function (a, b) {
+		return {$: 'Token', a: a, b: b};
+	});
+var $elm$parser$Parser$Advanced$isSubString = _Parser_isSubString;
+var $elm$core$Basics$not = _Basics_not;
+var $elm$parser$Parser$Advanced$token = function (_v0) {
+	var str = _v0.a;
+	var expecting = _v0.b;
+	var progress = !$elm$core$String$isEmpty(str);
+	return $elm$parser$Parser$Advanced$Parser(
+		function (s) {
+			var _v1 = A5($elm$parser$Parser$Advanced$isSubString, str, s.offset, s.row, s.col, s.src);
+			var newOffset = _v1.a;
+			var newRow = _v1.b;
+			var newCol = _v1.c;
+			return _Utils_eq(newOffset, -1) ? A2(
+				$elm$parser$Parser$Advanced$Bad,
+				false,
+				A2($elm$parser$Parser$Advanced$fromState, s, expecting)) : A3(
+				$elm$parser$Parser$Advanced$Good,
+				progress,
+				_Utils_Tuple0,
+				{col: newCol, context: s.context, indent: s.indent, offset: newOffset, row: newRow, src: s.src});
+		});
+};
+var $elm$parser$Parser$Advanced$symbol = $elm$parser$Parser$Advanced$token;
+var $elm$parser$Parser$symbol = function (str) {
+	return $elm$parser$Parser$Advanced$symbol(
+		A2(
+			$elm$parser$Parser$Advanced$Token,
+			str,
+			$elm$parser$Parser$ExpectingSymbol(str)));
+};
+var $rtfeldman$elm_iso8601_date_strings$Iso8601$epochYear = 1970;
+var $rtfeldman$elm_iso8601_date_strings$Iso8601$invalidDay = function (day) {
+	return $elm$parser$Parser$problem(
+		'Invalid day: ' + $elm$core$String$fromInt(day));
+};
+var $rtfeldman$elm_iso8601_date_strings$Iso8601$isLeapYear = function (year) {
+	return (!A2($elm$core$Basics$modBy, 4, year)) && ((!(!A2($elm$core$Basics$modBy, 100, year))) || (!A2($elm$core$Basics$modBy, 400, year)));
+};
+var $rtfeldman$elm_iso8601_date_strings$Iso8601$leapYearsBefore = function (y1) {
+	var y = y1 - 1;
+	return (((y / 4) | 0) - ((y / 100) | 0)) + ((y / 400) | 0);
+};
+var $rtfeldman$elm_iso8601_date_strings$Iso8601$msPerDay = 86400000;
+var $rtfeldman$elm_iso8601_date_strings$Iso8601$msPerYear = 31536000000;
+var $rtfeldman$elm_iso8601_date_strings$Iso8601$yearMonthDay = function (_v0) {
+	var year = _v0.a;
+	var month = _v0.b;
+	var dayInMonth = _v0.c;
+	if (dayInMonth < 0) {
+		return $rtfeldman$elm_iso8601_date_strings$Iso8601$invalidDay(dayInMonth);
+	} else {
+		var succeedWith = function (extraMs) {
+			var yearMs = $rtfeldman$elm_iso8601_date_strings$Iso8601$msPerYear * (year - $rtfeldman$elm_iso8601_date_strings$Iso8601$epochYear);
+			var days = ((month < 3) || (!$rtfeldman$elm_iso8601_date_strings$Iso8601$isLeapYear(year))) ? (dayInMonth - 1) : dayInMonth;
+			var dayMs = $rtfeldman$elm_iso8601_date_strings$Iso8601$msPerDay * (days + ($rtfeldman$elm_iso8601_date_strings$Iso8601$leapYearsBefore(year) - $rtfeldman$elm_iso8601_date_strings$Iso8601$leapYearsBefore($rtfeldman$elm_iso8601_date_strings$Iso8601$epochYear)));
+			return $elm$parser$Parser$succeed((extraMs + yearMs) + dayMs);
+		};
+		switch (month) {
+			case 1:
+				return (dayInMonth > 31) ? $rtfeldman$elm_iso8601_date_strings$Iso8601$invalidDay(dayInMonth) : succeedWith(0);
+			case 2:
+				return ((dayInMonth > 29) || ((dayInMonth === 29) && (!$rtfeldman$elm_iso8601_date_strings$Iso8601$isLeapYear(year)))) ? $rtfeldman$elm_iso8601_date_strings$Iso8601$invalidDay(dayInMonth) : succeedWith(2678400000);
+			case 3:
+				return (dayInMonth > 31) ? $rtfeldman$elm_iso8601_date_strings$Iso8601$invalidDay(dayInMonth) : succeedWith(5097600000);
+			case 4:
+				return (dayInMonth > 30) ? $rtfeldman$elm_iso8601_date_strings$Iso8601$invalidDay(dayInMonth) : succeedWith(7776000000);
+			case 5:
+				return (dayInMonth > 31) ? $rtfeldman$elm_iso8601_date_strings$Iso8601$invalidDay(dayInMonth) : succeedWith(10368000000);
+			case 6:
+				return (dayInMonth > 30) ? $rtfeldman$elm_iso8601_date_strings$Iso8601$invalidDay(dayInMonth) : succeedWith(13046400000);
+			case 7:
+				return (dayInMonth > 31) ? $rtfeldman$elm_iso8601_date_strings$Iso8601$invalidDay(dayInMonth) : succeedWith(15638400000);
+			case 8:
+				return (dayInMonth > 31) ? $rtfeldman$elm_iso8601_date_strings$Iso8601$invalidDay(dayInMonth) : succeedWith(18316800000);
+			case 9:
+				return (dayInMonth > 30) ? $rtfeldman$elm_iso8601_date_strings$Iso8601$invalidDay(dayInMonth) : succeedWith(20995200000);
+			case 10:
+				return (dayInMonth > 31) ? $rtfeldman$elm_iso8601_date_strings$Iso8601$invalidDay(dayInMonth) : succeedWith(23587200000);
+			case 11:
+				return (dayInMonth > 30) ? $rtfeldman$elm_iso8601_date_strings$Iso8601$invalidDay(dayInMonth) : succeedWith(26265600000);
+			case 12:
+				return (dayInMonth > 31) ? $rtfeldman$elm_iso8601_date_strings$Iso8601$invalidDay(dayInMonth) : succeedWith(28857600000);
+			default:
+				return $elm$parser$Parser$problem(
+					'Invalid month: \"' + ($elm$core$String$fromInt(month) + '\"'));
+		}
+	}
+};
+var $rtfeldman$elm_iso8601_date_strings$Iso8601$monthYearDayInMs = A2(
+	$elm$parser$Parser$andThen,
+	$rtfeldman$elm_iso8601_date_strings$Iso8601$yearMonthDay,
+	A2(
+		$elm$parser$Parser$keeper,
+		A2(
+			$elm$parser$Parser$keeper,
+			A2(
+				$elm$parser$Parser$keeper,
+				$elm$parser$Parser$succeed(
+					F3(
+						function (year, month, day) {
+							return _Utils_Tuple3(year, month, day);
+						})),
+				$rtfeldman$elm_iso8601_date_strings$Iso8601$paddedInt(4)),
+			$elm$parser$Parser$oneOf(
+				_List_fromArray(
+					[
+						A2(
+						$elm$parser$Parser$keeper,
+						A2(
+							$elm$parser$Parser$ignorer,
+							$elm$parser$Parser$succeed($elm$core$Basics$identity),
+							$elm$parser$Parser$symbol('-')),
+						$rtfeldman$elm_iso8601_date_strings$Iso8601$paddedInt(2)),
+						$rtfeldman$elm_iso8601_date_strings$Iso8601$paddedInt(2)
+					]))),
+		$elm$parser$Parser$oneOf(
+			_List_fromArray(
+				[
+					A2(
+					$elm$parser$Parser$keeper,
+					A2(
+						$elm$parser$Parser$ignorer,
+						$elm$parser$Parser$succeed($elm$core$Basics$identity),
+						$elm$parser$Parser$symbol('-')),
+					$rtfeldman$elm_iso8601_date_strings$Iso8601$paddedInt(2)),
+					$rtfeldman$elm_iso8601_date_strings$Iso8601$paddedInt(2)
+				]))));
+var $rtfeldman$elm_iso8601_date_strings$Iso8601$utcOffsetInMinutes = function () {
+	var utcOffsetMinutesFromParts = F3(
+		function (multiplier, hours, minutes) {
+			return (multiplier * (hours * 60)) + minutes;
+		});
+	return A2(
+		$elm$parser$Parser$keeper,
+		$elm$parser$Parser$succeed($elm$core$Basics$identity),
+		$elm$parser$Parser$oneOf(
+			_List_fromArray(
+				[
+					A2(
+					$elm$parser$Parser$map,
+					function (_v0) {
+						return 0;
+					},
+					$elm$parser$Parser$symbol('Z')),
+					A2(
+					$elm$parser$Parser$keeper,
+					A2(
+						$elm$parser$Parser$keeper,
+						A2(
+							$elm$parser$Parser$keeper,
+							$elm$parser$Parser$succeed(utcOffsetMinutesFromParts),
+							$elm$parser$Parser$oneOf(
+								_List_fromArray(
+									[
+										A2(
+										$elm$parser$Parser$map,
+										function (_v1) {
+											return 1;
+										},
+										$elm$parser$Parser$symbol('+')),
+										A2(
+										$elm$parser$Parser$map,
+										function (_v2) {
+											return -1;
+										},
+										$elm$parser$Parser$symbol('-'))
+									]))),
+						$rtfeldman$elm_iso8601_date_strings$Iso8601$paddedInt(2)),
+					$elm$parser$Parser$oneOf(
+						_List_fromArray(
+							[
+								A2(
+								$elm$parser$Parser$keeper,
+								A2(
+									$elm$parser$Parser$ignorer,
+									$elm$parser$Parser$succeed($elm$core$Basics$identity),
+									$elm$parser$Parser$symbol(':')),
+								$rtfeldman$elm_iso8601_date_strings$Iso8601$paddedInt(2)),
+								$rtfeldman$elm_iso8601_date_strings$Iso8601$paddedInt(2),
+								$elm$parser$Parser$succeed(0)
+							]))),
+					A2(
+					$elm$parser$Parser$ignorer,
+					$elm$parser$Parser$succeed(0),
+					$elm$parser$Parser$end)
+				])));
+}();
+var $rtfeldman$elm_iso8601_date_strings$Iso8601$iso8601 = A2(
+	$elm$parser$Parser$andThen,
+	function (datePart) {
+		return $elm$parser$Parser$oneOf(
+			_List_fromArray(
+				[
+					A2(
+					$elm$parser$Parser$keeper,
+					A2(
+						$elm$parser$Parser$keeper,
+						A2(
+							$elm$parser$Parser$keeper,
+							A2(
+								$elm$parser$Parser$keeper,
+								A2(
+									$elm$parser$Parser$keeper,
+									A2(
+										$elm$parser$Parser$ignorer,
+										$elm$parser$Parser$succeed(
+											$rtfeldman$elm_iso8601_date_strings$Iso8601$fromParts(datePart)),
+										$elm$parser$Parser$symbol('T')),
+									$rtfeldman$elm_iso8601_date_strings$Iso8601$paddedInt(2)),
+								$elm$parser$Parser$oneOf(
+									_List_fromArray(
+										[
+											A2(
+											$elm$parser$Parser$keeper,
+											A2(
+												$elm$parser$Parser$ignorer,
+												$elm$parser$Parser$succeed($elm$core$Basics$identity),
+												$elm$parser$Parser$symbol(':')),
+											$rtfeldman$elm_iso8601_date_strings$Iso8601$paddedInt(2)),
+											$rtfeldman$elm_iso8601_date_strings$Iso8601$paddedInt(2)
+										]))),
+							$elm$parser$Parser$oneOf(
+								_List_fromArray(
+									[
+										A2(
+										$elm$parser$Parser$keeper,
+										A2(
+											$elm$parser$Parser$ignorer,
+											$elm$parser$Parser$succeed($elm$core$Basics$identity),
+											$elm$parser$Parser$symbol(':')),
+										$rtfeldman$elm_iso8601_date_strings$Iso8601$paddedInt(2)),
+										$rtfeldman$elm_iso8601_date_strings$Iso8601$paddedInt(2),
+										$elm$parser$Parser$succeed(0)
+									]))),
+						$elm$parser$Parser$oneOf(
+							_List_fromArray(
+								[
+									A2(
+									$elm$parser$Parser$keeper,
+									A2(
+										$elm$parser$Parser$ignorer,
+										$elm$parser$Parser$succeed($elm$core$Basics$identity),
+										$elm$parser$Parser$symbol('.')),
+									$rtfeldman$elm_iso8601_date_strings$Iso8601$fractionsOfASecondInMs),
+									$elm$parser$Parser$succeed(0)
+								]))),
+					A2($elm$parser$Parser$ignorer, $rtfeldman$elm_iso8601_date_strings$Iso8601$utcOffsetInMinutes, $elm$parser$Parser$end)),
+					A2(
+					$elm$parser$Parser$ignorer,
+					$elm$parser$Parser$succeed(
+						A6($rtfeldman$elm_iso8601_date_strings$Iso8601$fromParts, datePart, 0, 0, 0, 0, 0)),
+					$elm$parser$Parser$end)
+				]));
+	},
+	$rtfeldman$elm_iso8601_date_strings$Iso8601$monthYearDayInMs);
+var $elm$parser$Parser$DeadEnd = F3(
+	function (row, col, problem) {
+		return {col: col, problem: problem, row: row};
+	});
+var $elm$parser$Parser$problemToDeadEnd = function (p) {
+	return A3($elm$parser$Parser$DeadEnd, p.row, p.col, p.problem);
+};
+var $elm$parser$Parser$Advanced$bagToList = F2(
+	function (bag, list) {
+		bagToList:
+		while (true) {
+			switch (bag.$) {
+				case 'Empty':
+					return list;
+				case 'AddRight':
+					var bag1 = bag.a;
+					var x = bag.b;
+					var $temp$bag = bag1,
+						$temp$list = A2($elm$core$List$cons, x, list);
+					bag = $temp$bag;
+					list = $temp$list;
+					continue bagToList;
+				default:
+					var bag1 = bag.a;
+					var bag2 = bag.b;
+					var $temp$bag = bag1,
+						$temp$list = A2($elm$parser$Parser$Advanced$bagToList, bag2, list);
+					bag = $temp$bag;
+					list = $temp$list;
+					continue bagToList;
+			}
+		}
+	});
+var $elm$parser$Parser$Advanced$run = F2(
+	function (_v0, src) {
+		var parse = _v0.a;
+		var _v1 = parse(
+			{col: 1, context: _List_Nil, indent: 1, offset: 0, row: 1, src: src});
+		if (_v1.$ === 'Good') {
+			var value = _v1.b;
+			return $elm$core$Result$Ok(value);
+		} else {
+			var bag = _v1.b;
+			return $elm$core$Result$Err(
+				A2($elm$parser$Parser$Advanced$bagToList, bag, _List_Nil));
+		}
+	});
+var $elm$parser$Parser$run = F2(
+	function (parser, source) {
+		var _v0 = A2($elm$parser$Parser$Advanced$run, parser, source);
+		if (_v0.$ === 'Ok') {
+			var a = _v0.a;
+			return $elm$core$Result$Ok(a);
+		} else {
+			var problems = _v0.a;
+			return $elm$core$Result$Err(
+				A2($elm$core$List$map, $elm$parser$Parser$problemToDeadEnd, problems));
+		}
+	});
+var $rtfeldman$elm_iso8601_date_strings$Iso8601$toTime = function (str) {
+	return A2($elm$parser$Parser$run, $rtfeldman$elm_iso8601_date_strings$Iso8601$iso8601, str);
+};
+var $elm$time$Time$Zone = F2(
+	function (a, b) {
+		return {$: 'Zone', a: a, b: b};
+	});
+var $elm$time$Time$utc = A2($elm$time$Time$Zone, 0, _List_Nil);
+var $ryannhg$date_format$DateFormat$WeekOfYearNumber = {$: 'WeekOfYearNumber'};
+var $ryannhg$date_format$DateFormat$weekOfYearNumber = $ryannhg$date_format$DateFormat$WeekOfYearNumber;
+var $author$project$Main$getWeekIntFromDate = function (datum) {
+	var _v0 = $rtfeldman$elm_iso8601_date_strings$Iso8601$toTime(datum);
+	if (_v0.$ === 'Ok') {
+		var time = _v0.a;
+		var _v1 = $elm$core$String$toInt(
+			A3(
+				$ryannhg$date_format$DateFormat$format,
+				_List_fromArray(
+					[$ryannhg$date_format$DateFormat$weekOfYearNumber]),
+				$elm$time$Time$utc,
+				time));
+		if (_v1.$ === 'Just') {
+			var week = _v1.a;
+			return week;
+		} else {
+			return 0;
+		}
+	} else {
+		return 0;
+	}
+};
+var $elm$core$List$any = F2(
+	function (isOkay, list) {
+		any:
+		while (true) {
+			if (!list.b) {
+				return false;
+			} else {
+				var x = list.a;
+				var xs = list.b;
+				if (isOkay(x)) {
+					return true;
+				} else {
+					var $temp$isOkay = isOkay,
+						$temp$list = xs;
+					isOkay = $temp$isOkay;
+					list = $temp$list;
+					continue any;
+				}
+			}
+		}
+	});
+var $elm$core$List$member = F2(
+	function (x, xs) {
+		return A2(
+			$elm$core$List$any,
+			function (a) {
+				return _Utils_eq(a, x);
+			},
+			xs);
+	});
+var $author$project$Main$getWeeks = F2(
+	function (lektion, veckor) {
+		return A2(
+			$elm$core$List$member,
+			$author$project$Main$getWeekIntFromDate(lektion.start),
+			veckor) ? veckor : A2(
+			$elm$core$List$append,
+			_List_fromArray(
+				[
+					$author$project$Main$getWeekIntFromDate(lektion.start)
+				]),
+			veckor);
+	});
+var $author$project$Main$extendedElev = function (elev) {
+	return {
+		namn: elev.namn,
+		short_id: elev.short_id,
+		tider: elev.tider,
+		uuid: elev.uuid,
+		veckor: A3($elm$core$List$foldr, $author$project$Main$getWeeks, _List_Nil, elev.tider)
+	};
+};
+var $author$project$Main$olika = _List_fromArray(
+	['Närvarande', 'Giltigt frånvarande', 'Annan aktivitet', 'Ogiltig frånvarande']);
+var $elm$html$Html$table = _VirtualDom_node('table');
+var $elm$html$Html$th = _VirtualDom_node('th');
+var $elm$html$Html$tr = _VirtualDom_node('tr');
+var $author$project$Main$wasLateMin = function (lektion) {
+	return (lektion.avvikelse > 0) ? A2(
+		$elm$html$Html$span,
+		_List_fromArray(
+			[
+				$elm$html$Html$Attributes$class('red')
+			]),
+		_List_fromArray(
+			[
+				$elm$html$Html$text(
+				' Min: ' + $elm$core$String$fromInt(lektion.avvikelse))
+			])) : A2($elm$html$Html$span, _List_Nil, _List_Nil);
+};
+var $author$project$Main$enLektion = function (lektion) {
+	return A2(
+		$elm$html$Html$div,
+		_List_fromArray(
+			[
+				$author$project$Main$classBystatus(lektion.status)
+			]),
+		_List_fromArray(
+			[
+				$elm$html$Html$text(
+				A3($elm$core$String$slice, -8, -3, lektion.start) + (' ' + lektion.lektion)),
+				$author$project$Main$wasLateMin(lektion)
+			]));
+};
+var $ryannhg$date_format$DateFormat$DayOfWeekNumber = {$: 'DayOfWeekNumber'};
+var $ryannhg$date_format$DateFormat$dayOfWeekNumber = $ryannhg$date_format$DateFormat$DayOfWeekNumber;
+var $author$project$Main$getDayIntFromDate = function (datum) {
+	var _v0 = $rtfeldman$elm_iso8601_date_strings$Iso8601$toTime(datum);
+	if (_v0.$ === 'Ok') {
+		var time = _v0.a;
+		var _v1 = $elm$core$String$toInt(
+			A3(
+				$ryannhg$date_format$DateFormat$format,
+				_List_fromArray(
+					[$ryannhg$date_format$DateFormat$dayOfWeekNumber]),
+				$elm$time$Time$utc,
+				time));
+		if (_v1.$ === 'Just') {
+			var day = _v1.a;
+			return day;
+		} else {
+			return 0;
+		}
+	} else {
+		return 0;
+	}
+};
+var $author$project$Main$filerForDyW = F3(
+	function (dag, vecka, tid) {
+		return _Utils_eq(
+			$author$project$Main$getDayIntFromDate(tid.start),
+			dag) && _Utils_eq(
+			$author$project$Main$getWeekIntFromDate(tid.start),
+			vecka);
+	});
+var $elm$html$Html$td = _VirtualDom_node('td');
+var $author$project$Main$enDag = F3(
+	function (lektioner, vecka, dag) {
+		return A2(
+			$elm$html$Html$td,
+			_List_Nil,
+			A2(
+				$elm$core$List$map,
+				$author$project$Main$enLektion,
+				A2(
+					$elm$core$List$filter,
+					A2($author$project$Main$filerForDyW, dag, vecka),
+					lektioner)));
+	});
+var $author$project$Main$enVecka = F2(
+	function (lektioner, vecka) {
+		return A2(
+			$elm$html$Html$tr,
+			_List_Nil,
+			A2(
+				$elm$core$List$map,
+				A2($author$project$Main$enDag, lektioner, vecka),
+				_List_fromArray(
+					[1, 2, 3, 4, 5])));
+	});
+var $author$project$Main$veckorD = function (elev) {
+	return A2(
+		$elm$core$List$map,
+		$author$project$Main$enVecka(elev.tider),
+		elev.veckor);
+};
 var $author$project$Main$rowElev = function (elev) {
 	return A2(
 		$elm$html$Html$div,
-		_List_Nil,
 		_List_fromArray(
 			[
-				$elm$html$Html$text(elev.namn)
+				$elm$html$Html$Attributes$class('elev')
+			]),
+		_List_fromArray(
+			[
+				$elm$html$Html$text(elev.namn),
+				A2(
+				$elm$html$Html$table,
+				_List_fromArray(
+					[
+						$elm$html$Html$Attributes$class('table')
+					]),
+				A2(
+					$elm$core$List$append,
+					_List_fromArray(
+						[
+							A2(
+							$elm$html$Html$tr,
+							_List_Nil,
+							_List_fromArray(
+								[
+									A2(
+									$elm$html$Html$th,
+									_List_Nil,
+									_List_fromArray(
+										[
+											$elm$html$Html$text('Måndag')
+										])),
+									A2(
+									$elm$html$Html$th,
+									_List_Nil,
+									_List_fromArray(
+										[
+											$elm$html$Html$text('Tisdag')
+										])),
+									A2(
+									$elm$html$Html$th,
+									_List_Nil,
+									_List_fromArray(
+										[
+											$elm$html$Html$text('Onsdag')
+										])),
+									A2(
+									$elm$html$Html$th,
+									_List_Nil,
+									_List_fromArray(
+										[
+											$elm$html$Html$text('Torsdag')
+										])),
+									A2(
+									$elm$html$Html$th,
+									_List_Nil,
+									_List_fromArray(
+										[
+											$elm$html$Html$text('Fredag')
+										]))
+								]))
+						]),
+					$author$project$Main$veckorD(
+						$author$project$Main$extendedElev(elev)))),
+				A2(
+				$elm$html$Html$div,
+				_List_fromArray(
+					[
+						$elm$html$Html$Attributes$class('sida')
+					]),
+				A2($elm$core$List$map, $author$project$Main$exempel, $author$project$Main$olika))
 			]));
 };
-var $elm$json$Json$Encode$string = _Json_wrap;
-var $elm$html$Html$Attributes$stringProperty = F2(
-	function (key, string) {
-		return A2(
-			_VirtualDom_property,
-			key,
-			$elm$json$Json$Encode$string(string));
-	});
 var $elm$html$Html$Attributes$type_ = $elm$html$Html$Attributes$stringProperty('type');
 var $elm$html$Html$Attributes$value = $elm$html$Html$Attributes$stringProperty('value');
 var $author$project$Main$view = function (model) {
@@ -6592,44 +8519,46 @@ var $author$project$Main$view = function (model) {
 		_List_Nil,
 		_List_fromArray(
 			[
-				A2(
+				(!$elm$core$List$length(model.elever)) ? A2(
 				$elm$html$Html$div,
 				_List_Nil,
 				_List_fromArray(
 					[
-						$elm$html$Html$text(model.status)
-					])),
+						$elm$html$Html$text(model.status),
+						A2(
+						$elm$html$Html$input,
+						_List_fromArray(
+							[
+								$elm$html$Html$Attributes$value(model.email),
+								$elm$html$Html$Events$onInput($author$project$Main$EmailChange),
+								$elm$html$Html$Attributes$class('form-control')
+							]),
+						_List_Nil),
+						A2(
+						$elm$html$Html$input,
+						_List_fromArray(
+							[
+								$elm$html$Html$Attributes$type_('password'),
+								$elm$html$Html$Attributes$value(model.password),
+								$elm$html$Html$Events$onInput($author$project$Main$PasswordChange),
+								$elm$html$Html$Attributes$class('form-control')
+							]),
+						_List_Nil),
+						A2(
+						$elm$html$Html$button,
+						_List_fromArray(
+							[
+								$elm$html$Html$Events$onClick($author$project$Main$Login)
+							]),
+						_List_fromArray(
+							[
+								$elm$html$Html$text('Login')
+							]))
+					])) : A2($elm$html$Html$span, _List_Nil, _List_Nil),
 				A2(
 				$elm$html$Html$div,
 				_List_Nil,
-				A2($elm$core$List$map, $author$project$Main$rowElev, model.elever)),
-				A2(
-				$elm$html$Html$input,
-				_List_fromArray(
-					[
-						$elm$html$Html$Attributes$value(model.email),
-						$elm$html$Html$Events$onInput($author$project$Main$EmailChange)
-					]),
-				_List_Nil),
-				A2(
-				$elm$html$Html$input,
-				_List_fromArray(
-					[
-						$elm$html$Html$Attributes$type_('password'),
-						$elm$html$Html$Attributes$value(model.password),
-						$elm$html$Html$Events$onInput($author$project$Main$PasswordChange)
-					]),
-				_List_Nil),
-				A2(
-				$elm$html$Html$button,
-				_List_fromArray(
-					[
-						$elm$html$Html$Events$onClick($author$project$Main$Login)
-					]),
-				_List_fromArray(
-					[
-						$elm$html$Html$text('Login')
-					]))
+				A2($elm$core$List$map, $author$project$Main$rowElev, model.elever))
 			]));
 };
 var $author$project$Main$main = $elm$browser$Browser$element(

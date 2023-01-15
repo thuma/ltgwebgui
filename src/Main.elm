@@ -237,7 +237,7 @@ rowElev elev =
     div [ class "elev"]
         [ text elev.namn
 --      , table [] ( List.map rowTid elev.tider )
-        , table [ class "table"] (List.append [ tr []
+        , table [ class "table table-sm table-bordered"] (List.append [ tr []
           [ th [] [text "Måndag"]
           , th [] [text "Tisdag"]
           , th [] [text "Onsdag"]
@@ -267,15 +267,16 @@ rowTid lektion =
 view : Model -> ( Html Msg ) 
 view model = 
   div []
-    [ if (List.length model.elever) == 0 then div []
+    [ if (List.length model.elever) == 0 then div [ class "container" ]
         [ text model.status
+        , text "Användarnamn:"
         , input [ value model.email, onInput EmailChange, class "form-control"] [ ]
+        , text "Lösenord:"
         , input [ type_ "password", value model.password, onInput PasswordChange, class "form-control"] [ ]
-        , button [ onClick Login ] [ text "Login" ]
+        , button [ class "btn btn-primary", onClick Login ] [ text "Login" ]
         ]
       else
-      span [] []
-    , div [] ( List.map rowElev model.elever )
+        div [] ( List.map rowElev model.elever )
     ]
 
 subscriptions : Model -> Sub Msg

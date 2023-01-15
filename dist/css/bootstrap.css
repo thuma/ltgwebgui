@@ -1884,6 +1884,8 @@ progress {
 
 .table-bordered > :not(caption) > * {
   border-width: var(--bs-border-width) 0;
+  border-left-width: 2px;
+  border-right-width: 2px;
 }
 .table-bordered > :not(caption) > * > * {
   border-width: 0 var(--bs-border-width);

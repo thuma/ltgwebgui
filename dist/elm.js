@@ -8452,7 +8452,7 @@ var $author$project$Main$rowElev = function (elev) {
 				$elm$html$Html$table,
 				_List_fromArray(
 					[
-						$elm$html$Html$Attributes$class('table')
+						$elm$html$Html$Attributes$class('table table-sm table-bordered')
 					]),
 				A2(
 					$elm$core$List$append,
@@ -8521,10 +8521,14 @@ var $author$project$Main$view = function (model) {
 			[
 				(!$elm$core$List$length(model.elever)) ? A2(
 				$elm$html$Html$div,
-				_List_Nil,
+				_List_fromArray(
+					[
+						$elm$html$Html$Attributes$class('container')
+					]),
 				_List_fromArray(
 					[
 						$elm$html$Html$text(model.status),
+						$elm$html$Html$text('Användarnamn:'),
 						A2(
 						$elm$html$Html$input,
 						_List_fromArray(
@@ -8534,6 +8538,7 @@ var $author$project$Main$view = function (model) {
 								$elm$html$Html$Attributes$class('form-control')
 							]),
 						_List_Nil),
+						$elm$html$Html$text('Lösenord:'),
 						A2(
 						$elm$html$Html$input,
 						_List_fromArray(
@@ -8548,14 +8553,14 @@ var $author$project$Main$view = function (model) {
 						$elm$html$Html$button,
 						_List_fromArray(
 							[
+								$elm$html$Html$Attributes$class('btn btn-primary'),
 								$elm$html$Html$Events$onClick($author$project$Main$Login)
 							]),
 						_List_fromArray(
 							[
 								$elm$html$Html$text('Login')
 							]))
-					])) : A2($elm$html$Html$span, _List_Nil, _List_Nil),
-				A2(
+					])) : A2(
 				$elm$html$Html$div,
 				_List_Nil,
 				A2($elm$core$List$map, $author$project$Main$rowElev, model.elever))

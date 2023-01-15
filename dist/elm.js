@@ -6623,7 +6623,7 @@ var $author$project$Main$update = F2(
 					return _Utils_Tuple2(
 						_Utils_update(
 							model,
-							{elever: data.alla}),
+							{elever: data.alla, status: 'Laddad'}),
 						$elm$core$Platform$Cmd$none);
 				} else {
 					var error = result.a;
@@ -6655,6 +6655,7 @@ var $elm$html$Html$Attributes$stringProperty = F2(
 	});
 var $elm$html$Html$Attributes$class = $elm$html$Html$Attributes$stringProperty('className');
 var $elm$html$Html$div = _VirtualDom_node('div');
+var $elm$html$Html$img = _VirtualDom_node('img');
 var $elm$html$Html$input = _VirtualDom_node('input');
 var $elm$virtual_dom$VirtualDom$Normal = function (a) {
 	return {$: 'Normal', a: a};
@@ -8511,6 +8512,12 @@ var $author$project$Main$rowElev = function (elev) {
 				A2($elm$core$List$map, $author$project$Main$exempel, $author$project$Main$olika))
 			]));
 };
+var $elm$html$Html$Attributes$src = function (url) {
+	return A2(
+		$elm$html$Html$Attributes$stringProperty,
+		'src',
+		_VirtualDom_noJavaScriptOrHtmlUri(url));
+};
 var $elm$html$Html$Attributes$type_ = $elm$html$Html$Attributes$stringProperty('type');
 var $elm$html$Html$Attributes$value = $elm$html$Html$Attributes$stringProperty('value');
 var $author$project$Main$view = function (model) {
@@ -8519,7 +8526,7 @@ var $author$project$Main$view = function (model) {
 		_List_Nil,
 		_List_fromArray(
 			[
-				(!$elm$core$List$length(model.elever)) ? A2(
+				((!$elm$core$List$length(model.elever)) && (model.status === '')) ? A2(
 				$elm$html$Html$div,
 				_List_fromArray(
 					[
@@ -8560,10 +8567,26 @@ var $author$project$Main$view = function (model) {
 							[
 								$elm$html$Html$text('Login')
 							]))
+					])) : ((model.status === 'Login') ? A2(
+				$elm$html$Html$div,
+				_List_fromArray(
+					[
+						$elm$html$Html$Attributes$class('text-center')
+					]),
+				_List_fromArray(
+					[
+						A2(
+						$elm$html$Html$img,
+						_List_fromArray(
+							[
+								$elm$html$Html$Attributes$src('img/Loading_icon.gif'),
+								$elm$html$Html$Attributes$class('mx-auto d-block')
+							]),
+						_List_Nil)
 					])) : A2(
 				$elm$html$Html$div,
 				_List_Nil,
-				A2($elm$core$List$map, $author$project$Main$rowElev, model.elever))
+				A2($elm$core$List$map, $author$project$Main$rowElev, model.elever)))
 			]));
 };
 var $author$project$Main$main = $elm$browser$Browser$element(

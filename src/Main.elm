@@ -1,6 +1,6 @@
 module Main exposing (..)
 import Browser
-import Html exposing (Html, Attribute, button, div, text, input, table, tr, th, td, span, footer)
+import Html exposing (Html, Attribute, img, button, div, text, input, table, tr, th, td, span, footer)
 import Html.Attributes exposing (..)
 import Html.Events exposing (onClick, onInput)
 import Http
@@ -134,7 +134,7 @@ update msg model =
     GotText result ->
       case result of
         Ok data ->
-          ({ model | elever = data.alla }, Cmd.none)
+          ({ model | elever = data.alla, status = "Laddad" }, Cmd.none)
         Err error ->
           ({ model | status = (errorToString error) } , Cmd.none)
 
@@ -267,14 +267,21 @@ rowTid lektion =
 view : Model -> ( Html Msg ) 
 view model = 
   div []
-    [ if (List.length model.elever) == 0 then div [ class "container" ]
-        [ text model.status
-        , text "Användarnamn:"
-        , input [ value model.email, onInput EmailChange, class "form-control"] [ ]
-        , text "Lösenord:"
-        , input [ type_ "password", value model.password, onInput PasswordChange, class "form-control"] [ ]
-        , button [ class "btn btn-primary", onClick Login ] [ text "Login" ]
-        ]
+    [ if (List.length model.elever) == 0 && model.status == "" then
+        div [ class "container" ]
+          [ text model.status
+          , text "Användarnamn:"
+          , input [ value model.email, onInput EmailChange, class "form-control"] [ ]
+          , text "Lösenord:"
+          , input [ type_ "password", value model.password, onInput PasswordChange, class "form-control"] [ ]
+          , button [ class "btn btn-primary", onClick Login ] [ text "Login" ]
+          ]
+      else if model.status == "Login" then
+        div [ class "text-center" ] 
+          [ img
+            [ src "img/Loading_icon.gif"
+            , class "mx-auto d-block"] []
+          ]
       else
         div [] ( List.map rowElev model.elever )
     ]

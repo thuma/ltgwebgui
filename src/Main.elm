@@ -163,6 +163,14 @@ extendedElev elev =
   , veckor = List.foldr getWeeks [] elev.tider
   }
 
+getDateFromLektionsList : List Lektionstid -> String
+getDateFromLektionsList lektioner = 
+  case (List.head lektioner) of
+    Just lektion ->
+      String.slice 0 10 lektion.start 
+    Nothing ->
+      ""
+
 getWeekIntFromDate : String -> Int
 getWeekIntFromDate datum = 
   case (Iso8601.toTime datum) of
@@ -218,13 +226,24 @@ filerForDyW dag vecka tid =
   (getDayIntFromDate tid.start) == dag && (getWeekIntFromDate tid.start) == vecka
 
 enLektion : Lektionstid -> Html Msg
-enLektion lektion = div [classBystatus lektion.status]
-  [ text ((String.slice -8 -3 lektion.start) ++ " " ++ lektion.lektion++" ")
-  , (wasLateMin lektion) 
-  ]
+enLektion lektion = 
+  div [classBystatus lektion.status]
+    [ text ((String.slice -8 -3 lektion.start) ++ " " ++ lektion.lektion++" ")
+    , (wasLateMin lektion) 
+    ]
 
 enDag : List (Lektionstid) -> Int -> Int -> Html Msg
-enDag lektioner vecka dag = td [] (List.map enLektion (List.filter (filerForDyW dag vecka) lektioner))
+enDag lektioner vecka dag = td []
+  (List.append 
+    [text (getDateFromLektionsList (List.filter (filerForDyW dag vecka) lektioner ))]
+    (List.map enLektion
+      (List.filter
+        (filerForDyW dag vecka)
+        lektioner
+      )
+    )
+  )
+
 
 enVecka : List (Lektionstid) -> Int -> Html Msg
 enVecka lektioner vecka = tr [] (List.map (enDag lektioner vecka) [1, 2, 3, 4, 5] )

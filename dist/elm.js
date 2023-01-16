@@ -8415,6 +8415,15 @@ var $author$project$Main$filerForDyW = F3(
 			$author$project$Main$getWeekIntFromDate(tid.start),
 			vecka);
 	});
+var $author$project$Main$getDateFromLektionsList = function (lektioner) {
+	var _v0 = $elm$core$List$head(lektioner);
+	if (_v0.$ === 'Just') {
+		var lektion = _v0.a;
+		return A3($elm$core$String$slice, 0, 10, lektion.start);
+	} else {
+		return '';
+	}
+};
 var $elm$html$Html$td = _VirtualDom_node('td');
 var $author$project$Main$enDag = F3(
 	function (lektioner, vecka, dag) {
@@ -8422,12 +8431,23 @@ var $author$project$Main$enDag = F3(
 			$elm$html$Html$td,
 			_List_Nil,
 			A2(
-				$elm$core$List$map,
-				$author$project$Main$enLektion,
+				$elm$core$List$append,
+				_List_fromArray(
+					[
+						$elm$html$Html$text(
+						$author$project$Main$getDateFromLektionsList(
+							A2(
+								$elm$core$List$filter,
+								A2($author$project$Main$filerForDyW, dag, vecka),
+								lektioner)))
+					]),
 				A2(
-					$elm$core$List$filter,
-					A2($author$project$Main$filerForDyW, dag, vecka),
-					lektioner)));
+					$elm$core$List$map,
+					$author$project$Main$enLektion,
+					A2(
+						$elm$core$List$filter,
+						A2($author$project$Main$filerForDyW, dag, vecka),
+						lektioner))));
 	});
 var $author$project$Main$enVecka = F2(
 	function (lektioner, vecka) {

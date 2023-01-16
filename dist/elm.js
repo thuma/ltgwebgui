@@ -6602,6 +6602,12 @@ var $author$project$Main$update = F2(
 						model,
 						{status: 'Login'}),
 					$author$project$Main$getNarvaroData(model));
+			case 'ResetStatus':
+				return _Utils_Tuple2(
+					_Utils_update(
+						model,
+						{status: ''}),
+					$elm$core$Platform$Cmd$none);
 			case 'EmailChange':
 				var newEmail = msg.a;
 				return _Utils_Tuple2(
@@ -6644,6 +6650,7 @@ var $author$project$Main$Login = {$: 'Login'};
 var $author$project$Main$PasswordChange = function (a) {
 	return {$: 'PasswordChange', a: a};
 };
+var $author$project$Main$ResetStatus = {$: 'ResetStatus'};
 var $elm$html$Html$button = _VirtualDom_node('button');
 var $elm$json$Json$Encode$string = _Json_wrap;
 var $elm$html$Html$Attributes$stringProperty = F2(
@@ -8615,10 +8622,33 @@ var $author$project$Main$view = function (model) {
 				_List_Nil,
 				A2($elm$core$List$map, $author$project$Main$rowElev, model.elever)) : A2(
 				$elm$html$Html$div,
-				_List_Nil,
 				_List_fromArray(
 					[
-						$elm$html$Html$text(model.status)
+						$elm$html$Html$Attributes$class('container text-center')
+					]),
+				_List_fromArray(
+					[
+						A2(
+						$elm$html$Html$div,
+						_List_fromArray(
+							[
+								$elm$html$Html$Attributes$class('text-center')
+							]),
+						_List_fromArray(
+							[
+								$elm$html$Html$text(model.status)
+							])),
+						A2(
+						$elm$html$Html$button,
+						_List_fromArray(
+							[
+								$elm$html$Html$Attributes$class('btn btn-primary'),
+								$elm$html$Html$Events$onClick($author$project$Main$ResetStatus)
+							]),
+						_List_fromArray(
+							[
+								$elm$html$Html$text('Tillbaka')
+							]))
 					]))))
 			]));
 };

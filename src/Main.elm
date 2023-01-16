@@ -97,6 +97,7 @@ elevDecoder =
 
 type Msg 
   = Login 
+  | ResetStatus
   | PasswordChange String
   | EmailChange String
   | GotText (Result Http.Error Elever)
@@ -124,7 +125,10 @@ update msg model =
   case msg of
     Login ->
       ({ model | status  = "Login" }, getNarvaroData model)
-
+      
+    ResetStatus -> 
+      ({ model | status  = "" }, Cmd.none)
+      
     EmailChange newEmail ->
       ({ model | email  = newEmail }, Cmd.none)
       
@@ -304,7 +308,10 @@ view model =
       else if model.status == "Laddad" then
         div [] ( List.map rowElev model.elever )
       else
-        div [] [ text model.status ]
+        div [ class "container text-center" ]
+          [ div [ class "text-center" ] [ text model.status ]
+          , button [ class "btn btn-primary", onClick ResetStatus ] [ text "Tillbaka" ]
+          ]
     ]
 
 subscriptions : Model -> Sub Msg

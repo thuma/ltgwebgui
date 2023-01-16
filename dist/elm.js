@@ -5521,7 +5521,7 @@ var $author$project$Main$errorToString = function (error) {
 		case 'Timeout':
 			return 'Unable to reach the server, try again';
 		case 'NetworkError':
-			return 'Unable to reach the server, check your network connection';
+			return 'Något blev fel, kontrollera användarnamn och lösenord.';
 		case 'BadStatus':
 			switch (error.a) {
 				case 500:
@@ -6720,7 +6720,9 @@ var $author$project$Main$classBystatus = function (status) {
 var $elm$html$Html$span = _VirtualDom_node('span');
 var $elm$virtual_dom$VirtualDom$text = _VirtualDom_text;
 var $elm$html$Html$text = $elm$virtual_dom$VirtualDom$text;
-var $author$project$Main$exempel = function (status) {
+var $author$project$Main$exempel = function (_v0) {
+	var status = _v0.a;
+	var forklaring = _v0.b;
 	return A2(
 		$elm$html$Html$span,
 		_List_fromArray(
@@ -6729,7 +6731,7 @@ var $author$project$Main$exempel = function (status) {
 			]),
 		_List_fromArray(
 			[
-				$elm$html$Html$text(status)
+				$elm$html$Html$text(forklaring)
 			]));
 };
 var $ryannhg$date_format$DateFormat$Language$Language = F6(
@@ -8346,7 +8348,12 @@ var $author$project$Main$extendedElev = function (elev) {
 	};
 };
 var $author$project$Main$olika = _List_fromArray(
-	['Närvarande', 'Giltigt frånvarande', 'Annan aktivitet', 'Ogiltig frånvarande']);
+	[
+		_Utils_Tuple2('Närvarande', ' Närvarande '),
+		_Utils_Tuple2('Giltigt frånvarande', ' Sjukanmäld '),
+		_Utils_Tuple2('Annan aktivitet', ' Ledig '),
+		_Utils_Tuple2('Ogiltig frånvarande', ' Ogiltig frånvaro ')
+	]);
 var $elm$html$Html$table = _VirtualDom_node('table');
 var $elm$html$Html$th = _VirtualDom_node('th');
 var $elm$html$Html$tr = _VirtualDom_node('tr');
@@ -8360,7 +8367,7 @@ var $author$project$Main$wasLateMin = function (lektion) {
 		_List_fromArray(
 			[
 				$elm$html$Html$text(
-				' Min: ' + $elm$core$String$fromInt(lektion.avvikelse))
+				$elm$core$String$fromInt(lektion.avvikelse) + ' min')
 			])) : A2($elm$html$Html$span, _List_Nil, _List_Nil);
 };
 var $author$project$Main$enLektion = function (lektion) {
@@ -8373,7 +8380,7 @@ var $author$project$Main$enLektion = function (lektion) {
 		_List_fromArray(
 			[
 				$elm$html$Html$text(
-				A3($elm$core$String$slice, -8, -3, lektion.start) + (' ' + lektion.lektion)),
+				A3($elm$core$String$slice, -8, -3, lektion.start) + (' ' + (lektion.lektion + ' '))),
 				$author$project$Main$wasLateMin(lektion)
 			]));
 };
@@ -8526,7 +8533,7 @@ var $author$project$Main$view = function (model) {
 		_List_Nil,
 		_List_fromArray(
 			[
-				((!$elm$core$List$length(model.elever)) && (model.status === '')) ? A2(
+				(model.status === '') ? A2(
 				$elm$html$Html$div,
 				_List_fromArray(
 					[
@@ -8583,10 +8590,16 @@ var $author$project$Main$view = function (model) {
 								$elm$html$Html$Attributes$class('mx-auto d-block')
 							]),
 						_List_Nil)
-					])) : A2(
+					])) : ((model.status === 'Laddad') ? A2(
 				$elm$html$Html$div,
 				_List_Nil,
-				A2($elm$core$List$map, $author$project$Main$rowElev, model.elever)))
+				A2($elm$core$List$map, $author$project$Main$rowElev, model.elever)) : A2(
+				$elm$html$Html$div,
+				_List_Nil,
+				_List_fromArray(
+					[
+						$elm$html$Html$text(model.status)
+					]))))
 			]));
 };
 var $author$project$Main$main = $elm$browser$Browser$element(

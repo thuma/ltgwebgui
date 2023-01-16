@@ -109,7 +109,7 @@ errorToString error =
         Http.Timeout ->
             "Unable to reach the server, try again"
         Http.NetworkError ->
-            "Unable to reach the server, check your network connection"
+            "Något blev fel, kontrollera användarnamn och lösenord."
         Http.BadStatus 500 ->
             "The server had a problem, try again later"
         Http.BadStatus 400 ->
@@ -194,22 +194,22 @@ getWeeks lektion veckor =
   else
     List.append [getWeekIntFromDate lektion.start] veckor
 
-olika : List String
+olika : List (String, String)
 olika = 
-  [ "Närvarande"
-  , "Giltigt frånvarande"
-  , "Annan aktivitet"
-  , "Ogiltig frånvarande"
+  [ ("Närvarande", " Närvarande ")
+  , ("Giltigt frånvarande", " Sjukanmäld ")
+  , ("Annan aktivitet", " Ledig ")
+  , ("Ogiltig frånvarande", " Ogiltig frånvaro ")
   ]
 
-exempel : String -> Html Msg
-exempel status =
-  span [ classBystatus status ] [ text status ]
+exempel : (String, String) -> Html Msg
+exempel (status, forklaring) =
+  span [ classBystatus status ] [ text forklaring ]
 
 wasLateMin : Lektionstid -> Html Msg
 wasLateMin lektion =
   if lektion.avvikelse > 0 then
-    span [ class "red" ]  [text (" Min: " ++ (String.fromInt lektion.avvikelse))]
+    span [ class "red" ]  [text ((String.fromInt lektion.avvikelse)++ " min")]
   else
     span [] []
 
@@ -219,7 +219,7 @@ filerForDyW dag vecka tid =
 
 enLektion : Lektionstid -> Html Msg
 enLektion lektion = div [classBystatus lektion.status]
-  [ text ((String.slice -8 -3 lektion.start) ++ " " ++ lektion.lektion)
+  [ text ((String.slice -8 -3 lektion.start) ++ " " ++ lektion.lektion++" ")
   , (wasLateMin lektion) 
   ]
 
@@ -267,7 +267,7 @@ rowTid lektion =
 view : Model -> ( Html Msg ) 
 view model = 
   div []
-    [ if (List.length model.elever) == 0 && model.status == "" then
+    [ if model.status == "" then
         div [ class "container" ]
           [ text model.status
           , text "Användarnamn:"
@@ -282,8 +282,10 @@ view model =
             [ src "img/Loading_icon.gif"
             , class "mx-auto d-block"] []
           ]
-      else
+      else if model.status == "Laddad" then
         div [] ( List.map rowElev model.elever )
+      else
+        div [] [ text model.status ]
     ]
 
 subscriptions : Model -> Sub Msg

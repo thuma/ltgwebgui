@@ -5505,7 +5505,7 @@ var $elm$core$Platform$Cmd$batch = _Platform_batch;
 var $elm$core$Platform$Cmd$none = $elm$core$Platform$Cmd$batch(_List_Nil);
 var $author$project$Main$init = function (_v0) {
 	return _Utils_Tuple2(
-		{elever: _List_Nil, email: '', password: '', status: ''},
+		{elever: _List_Nil, eleverf: _List_Nil, email: '', password: '', status: ''},
 		$elm$core$Platform$Cmd$none);
 };
 var $elm$core$Platform$Sub$batch = _Platform_batch;
@@ -5536,51 +5536,52 @@ var $author$project$Main$errorToString = function (error) {
 			return errorMessage;
 	}
 };
-var $author$project$Main$GotText = function (a) {
-	return {$: 'GotText', a: a};
+var $author$project$Main$GotEleverF = function (a) {
+	return {$: 'GotEleverF', a: a};
 };
-var $author$project$Main$Elever = function (alla) {
-	return {alla: alla};
+var $author$project$Main$EleverF = function (elever) {
+	return {elever: elever};
 };
-var $author$project$Main$Elev = F4(
-	function (namn, uuid, short_id, tider) {
-		return {namn: namn, short_id: short_id, tider: tider, uuid: uuid};
+var $author$project$Main$ElevF = F6(
+	function (firstName, lastName, streetAddress, postalCode, city, guardians) {
+		return {city: city, firstName: firstName, guardians: guardians, lastName: lastName, postalCode: postalCode, streetAddress: streetAddress};
 	});
 var $elm$json$Json$Decode$field = _Json_decodeField;
-var $elm$json$Json$Decode$list = _Json_decodeList;
-var $elm$json$Json$Decode$map4 = _Json_map4;
-var $elm$json$Json$Decode$string = _Json_decodeString;
-var $author$project$Main$Lektionstid = F5(
-	function (start, end, lektion, status, avvikelse) {
-		return {avvikelse: avvikelse, end: end, lektion: lektion, start: start, status: status};
+var $author$project$Main$Foralder = F5(
+	function (firstName, lastName, streetAddress, postalCode, city) {
+		return {city: city, firstName: firstName, lastName: lastName, postalCode: postalCode, streetAddress: streetAddress};
 	});
-var $elm$json$Json$Decode$int = _Json_decodeInt;
 var $elm$json$Json$Decode$map5 = _Json_map5;
-var $author$project$Main$tidDecoder = A6(
+var $elm$json$Json$Decode$string = _Json_decodeString;
+var $author$project$Main$foralderDecoder = A6(
 	$elm$json$Json$Decode$map5,
-	$author$project$Main$Lektionstid,
-	A2($elm$json$Json$Decode$field, 'start', $elm$json$Json$Decode$string),
-	A2($elm$json$Json$Decode$field, 'end', $elm$json$Json$Decode$string),
-	A2($elm$json$Json$Decode$field, 'lektion', $elm$json$Json$Decode$string),
-	A2($elm$json$Json$Decode$field, 'status', $elm$json$Json$Decode$string),
-	A2($elm$json$Json$Decode$field, 'avvikelse', $elm$json$Json$Decode$int));
-var $author$project$Main$elevDecoder = A5(
-	$elm$json$Json$Decode$map4,
-	$author$project$Main$Elev,
-	A2($elm$json$Json$Decode$field, 'name', $elm$json$Json$Decode$string),
-	A2($elm$json$Json$Decode$field, 'uuid', $elm$json$Json$Decode$string),
-	A2($elm$json$Json$Decode$field, 'short_id', $elm$json$Json$Decode$string),
+	$author$project$Main$Foralder,
+	A2($elm$json$Json$Decode$field, 'firstName', $elm$json$Json$Decode$string),
+	A2($elm$json$Json$Decode$field, 'lastName', $elm$json$Json$Decode$string),
+	A2($elm$json$Json$Decode$field, 'streetAddress', $elm$json$Json$Decode$string),
+	A2($elm$json$Json$Decode$field, 'postalCode', $elm$json$Json$Decode$string),
+	A2($elm$json$Json$Decode$field, 'city', $elm$json$Json$Decode$string));
+var $elm$json$Json$Decode$list = _Json_decodeList;
+var $elm$json$Json$Decode$map6 = _Json_map6;
+var $author$project$Main$elevFDecoder = A7(
+	$elm$json$Json$Decode$map6,
+	$author$project$Main$ElevF,
+	A2($elm$json$Json$Decode$field, 'firstName', $elm$json$Json$Decode$string),
+	A2($elm$json$Json$Decode$field, 'lastName', $elm$json$Json$Decode$string),
+	A2($elm$json$Json$Decode$field, 'streetAddress', $elm$json$Json$Decode$string),
+	A2($elm$json$Json$Decode$field, 'postalCode', $elm$json$Json$Decode$string),
+	A2($elm$json$Json$Decode$field, 'city', $elm$json$Json$Decode$string),
 	A2(
 		$elm$json$Json$Decode$field,
-		'tider',
-		$elm$json$Json$Decode$list($author$project$Main$tidDecoder)));
-var $author$project$Main$eleverDecoder = A2(
+		'guardians',
+		$elm$json$Json$Decode$list($author$project$Main$foralderDecoder)));
+var $author$project$Main$eleverForandrarDecoder = A2(
 	$elm$json$Json$Decode$map,
-	$author$project$Main$Elever,
+	$author$project$Main$EleverF,
 	A2(
 		$elm$json$Json$Decode$field,
-		'klass',
-		$elm$json$Json$Decode$list($author$project$Main$elevDecoder)));
+		'elever',
+		$elm$json$Json$Decode$list($author$project$Main$elevFDecoder)));
 var $elm$http$Http$BadStatus_ = F2(
 	function (a, b) {
 		return {$: 'BadStatus_', a: a, b: b};
@@ -6575,11 +6576,70 @@ var $elm$http$Http$request = function (r) {
 		$elm$http$Http$Request(
 			{allowCookiesFromOtherDomains: false, body: r.body, expect: r.expect, headers: r.headers, method: r.method, timeout: r.timeout, tracker: r.tracker, url: r.url}));
 };
+var $author$project$Main$getEleverForandrarDecoder = function (model) {
+	return $elm$http$Http$request(
+		{
+			body: $elm$http$Http$emptyBody,
+			expect: A2($elm$http$Http$expectJson, $author$project$Main$GotEleverF, $author$project$Main$eleverForandrarDecoder),
+			headers: _List_fromArray(
+				[
+					A2(
+					$elm$http$Http$header,
+					'Authorization',
+					'Basic ' + $truqu$elm_base64$Base64$encode(model.email + (':' + model.password)))
+				]),
+			method: 'GET',
+			timeout: $elm$core$Maybe$Nothing,
+			tracker: $elm$core$Maybe$Nothing,
+			url: 'https://api.ltgee.se/elever/elever'
+		});
+};
+var $author$project$Main$GotElever = function (a) {
+	return {$: 'GotElever', a: a};
+};
+var $author$project$Main$Elever = function (alla) {
+	return {alla: alla};
+};
+var $author$project$Main$Elev = F4(
+	function (namn, uuid, short_id, tider) {
+		return {namn: namn, short_id: short_id, tider: tider, uuid: uuid};
+	});
+var $elm$json$Json$Decode$map4 = _Json_map4;
+var $author$project$Main$Lektionstid = F5(
+	function (start, end, lektion, status, avvikelse) {
+		return {avvikelse: avvikelse, end: end, lektion: lektion, start: start, status: status};
+	});
+var $elm$json$Json$Decode$int = _Json_decodeInt;
+var $author$project$Main$tidDecoder = A6(
+	$elm$json$Json$Decode$map5,
+	$author$project$Main$Lektionstid,
+	A2($elm$json$Json$Decode$field, 'start', $elm$json$Json$Decode$string),
+	A2($elm$json$Json$Decode$field, 'end', $elm$json$Json$Decode$string),
+	A2($elm$json$Json$Decode$field, 'lektion', $elm$json$Json$Decode$string),
+	A2($elm$json$Json$Decode$field, 'status', $elm$json$Json$Decode$string),
+	A2($elm$json$Json$Decode$field, 'avvikelse', $elm$json$Json$Decode$int));
+var $author$project$Main$elevDecoder = A5(
+	$elm$json$Json$Decode$map4,
+	$author$project$Main$Elev,
+	A2($elm$json$Json$Decode$field, 'name', $elm$json$Json$Decode$string),
+	A2($elm$json$Json$Decode$field, 'uuid', $elm$json$Json$Decode$string),
+	A2($elm$json$Json$Decode$field, 'short_id', $elm$json$Json$Decode$string),
+	A2(
+		$elm$json$Json$Decode$field,
+		'tider',
+		$elm$json$Json$Decode$list($author$project$Main$tidDecoder)));
+var $author$project$Main$eleverDecoder = A2(
+	$elm$json$Json$Decode$map,
+	$author$project$Main$Elever,
+	A2(
+		$elm$json$Json$Decode$field,
+		'klass',
+		$elm$json$Json$Decode$list($author$project$Main$elevDecoder)));
 var $author$project$Main$getNarvaroData = function (model) {
 	return $elm$http$Http$request(
 		{
 			body: $elm$http$Http$emptyBody,
-			expect: A2($elm$http$Http$expectJson, $author$project$Main$GotText, $author$project$Main$eleverDecoder),
+			expect: A2($elm$http$Http$expectJson, $author$project$Main$GotElever, $author$project$Main$eleverDecoder),
 			headers: _List_fromArray(
 				[
 					A2(
@@ -6601,7 +6661,12 @@ var $author$project$Main$update = F2(
 					_Utils_update(
 						model,
 						{status: 'Login'}),
-					$author$project$Main$getNarvaroData(model));
+					$elm$core$Platform$Cmd$batch(
+						_List_fromArray(
+							[
+								$author$project$Main$getNarvaroData(model),
+								$author$project$Main$getEleverForandrarDecoder(model)
+							])));
 			case 'ResetStatus':
 				return _Utils_Tuple2(
 					_Utils_update(
@@ -6622,7 +6687,7 @@ var $author$project$Main$update = F2(
 						model,
 						{password: newPassword}),
 					$elm$core$Platform$Cmd$none);
-			default:
+			case 'GotElever':
 				var result = msg.a;
 				if (result.$ === 'Ok') {
 					var data = result.a;
@@ -6630,6 +6695,25 @@ var $author$project$Main$update = F2(
 						_Utils_update(
 							model,
 							{elever: data.alla, status: 'Laddad'}),
+						$elm$core$Platform$Cmd$none);
+				} else {
+					var error = result.a;
+					return _Utils_Tuple2(
+						_Utils_update(
+							model,
+							{
+								status: $author$project$Main$errorToString(error)
+							}),
+						$elm$core$Platform$Cmd$none);
+				}
+			default:
+				var result = msg.a;
+				if (result.$ === 'Ok') {
+					var data = result.a;
+					return _Utils_Tuple2(
+						_Utils_update(
+							model,
+							{eleverf: data.elever}),
 						$elm$core$Platform$Cmd$none);
 				} else {
 					var error = result.a;

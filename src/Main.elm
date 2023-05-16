@@ -5,7 +5,7 @@ import Html.Attributes exposing (..)
 import Html.Events exposing (onClick, onInput)
 import Http
 import Base64
-import Json.Decode exposing (Decoder, map, map4, map5, field, int, string, list)
+import Json.Decode exposing (Decoder, map, map4, map5, map6, field, int, string, list)
 import DateFormat exposing (format)
 import Time exposing (Posix, Zone, utc)
 import Iso8601
@@ -18,7 +18,19 @@ getNarvaroData model =
         , headers = [Http.header "Authorization" ("Basic " ++ (Base64.encode (model.email ++ ":" ++ model.password) ))]
         , url = "https://api.ltgee.se/vklass/v1/narvaro"
         , body = Http.emptyBody
-        , expect = Http.expectJson GotText eleverDecoder
+        , expect = Http.expectJson GotElever eleverDecoder
+        , timeout = Nothing
+        , tracker = Nothing
+        } 
+
+getEleverForandrarDecoder : Model -> Cmd Msg
+getEleverForandrarDecoder model =
+  Http.request
+        { method = "GET"
+        , headers = [Http.header "Authorization" ("Basic " ++ (Base64.encode (model.email ++ ":" ++ model.password) ))]
+        , url = "https://api.ltgee.se/elever/elever"
+        , body = Http.emptyBody
+        , expect = Http.expectJson GotEleverF eleverForandrarDecoder
         , timeout = Nothing
         , tracker = Nothing
         } 
@@ -36,6 +48,7 @@ init _ = (
   , email = ""
   , password = ""
   , elever = []
+  , eleverf = []
   }, 
   Cmd.none 
   )
@@ -45,6 +58,7 @@ type alias Model =
   , email : String
   , password: String
   , elever: List Elev
+  , eleverf: List ElevF
   }
 
 type alias Elever =
@@ -55,6 +69,26 @@ type alias Elev =
   , uuid : String
   , short_id : String
   , tider : List Lektionstid
+  }
+
+type alias EleverF =
+  { elever : List ElevF }
+
+type alias ElevF =
+  { firstName : String
+  , lastName : String
+  , streetAddress : String
+  , postalCode: String
+  , city : String
+  , guardians: List Foralder
+  }
+
+type alias Foralder =
+  { firstName : String
+  , lastName : String
+  , streetAddress : String
+  , postalCode: String
+  , city : String
   }
 
 type alias ExtendedElev =
@@ -95,12 +129,37 @@ elevDecoder =
     (field "short_id" string)
     (field "tider" (Json.Decode.list tidDecoder))
 
+eleverForandrarDecoder : Decoder EleverF
+eleverForandrarDecoder =
+  Json.Decode.map EleverF 
+    (field "elever" (Json.Decode.list elevFDecoder))
+
+elevFDecoder : Decoder ElevF
+elevFDecoder =
+  map6 ElevF
+    (field "firstName" string)
+    (field "lastName" string)
+    (field "streetAddress" string)
+    (field "postalCode" string)
+    (field "city" string)
+    (field "guardians" (Json.Decode.list foralderDecoder))
+
+foralderDecoder : Decoder Foralder
+foralderDecoder =
+  map5 Foralder
+    (field "firstName" string)
+    (field "lastName" string)
+    (field "streetAddress" string)
+    (field "postalCode" string)
+    (field "city" string)
+
 type Msg 
   = Login 
   | ResetStatus
   | PasswordChange String
   | EmailChange String
-  | GotText (Result Http.Error Elever)
+  | GotElever (Result Http.Error Elever)
+  | GotEleverF (Result Http.Error EleverF)
 
 errorToString : Http.Error -> String
 errorToString error =
@@ -124,8 +183,13 @@ update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
   case msg of
     Login ->
-      ({ model | status  = "Login" }, getNarvaroData model)
-      
+      ({ model | status  = "Login" }
+      , Cmd.batch 
+        [ getNarvaroData model
+        , getEleverForandrarDecoder model
+        ]
+      )
+
     ResetStatus -> 
       ({ model | status  = "" }, Cmd.none)
       
@@ -135,13 +199,19 @@ update msg model =
     PasswordChange newPassword ->
       ({ model | password  = newPassword }, Cmd.none)
     
-    GotText result ->
+    GotElever result ->
       case result of
         Ok data ->
           ({ model | elever = data.alla, status = "Laddad" }, Cmd.none)
         Err error ->
           ({ model | status = (errorToString error) } , Cmd.none)
 
+    GotEleverF result ->
+      case result of
+        Ok data ->
+          ({ model | eleverf = data.elever }, Cmd.none)
+        Err error ->
+          ({ model | status = (errorToString error) } , Cmd.none)
 
 classBystatus : String -> Html.Attribute msg
 classBystatus status =
